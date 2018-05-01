@@ -1,0 +1,15 @@
+# docker-compose for Fat controller stack
+#
+version: "2.4"
+services:
+
+  fat-controller:
+    image: phlax/fat-controller
+    build:
+      context: ./docker
+    volumes:
+      - etc-systemd:/etc/systemd/system
+    privileged: true
+
+volumes:
+  etc-systemd:
