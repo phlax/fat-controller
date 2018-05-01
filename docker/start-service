@@ -1,10 +1,25 @@
 #!/bin/bash
 
-SERVICES=${@:1}
+set -e
+
+SOCKET=$1
+SERVICES=${@:2}
 
 echo "Spawning services: $SERVICES"
 
 cores=$(fgrep -c processor /proc/cpuinfo)
+
+export COMPOSE_IGNORE_ORPHANS=true
+
+
+if [ -S "$SOCKET" ]; then
+    if [ -z $(/usr/local/bin/docker-compose --skip-hostname-check ps -q --filter 'status=running' $SERVICE)  ]; then
+        exit 0
+    else
+        echo "Removing stale socket: $SOCKET"
+        rm $SOCKET;
+    fi
+fi
 
 printf '%s\n' "${SERVICES[@]}" | xargs --max-procs=$cores  \
       --replace \

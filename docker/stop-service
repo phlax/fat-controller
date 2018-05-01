@@ -1,0 +1,12 @@
+#!/bin/bash
+
+SOCKET=$1
+SERVICE=$2
+
+echo "Stopping service $SERVICE"
+
+/usr/local/bin/docker-compose stop $SERVICE
+
+if [ -S "$SOCKET" ]; then
+    rm $SOCKET
+fi
