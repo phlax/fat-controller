@@ -1,0 +1,8 @@
+
+[controller]
+context: ${PWD}/example
+
+
+[service:nginx]
+description: Containerized: The NGINX HTTP and reverse proxy server
+listen: 0.0.0.0:8080

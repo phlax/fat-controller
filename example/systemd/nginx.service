@@ -1,9 +1,0 @@
-[Unit]
-Description=Containerized: The NGINX HTTP and reverse proxy server
-
-[Service]
-ExecStart=/usr/local/bin/docker-compose up -d nginx
-ExecStartPost=/bin/bash -c 'until [ "$(/usr/local/bin/docker-compose ps --services --filter \'status=running\' nginx)" ] && [ -S "/sockets/nginx.sock" ]; do sleep 0.1; done;'
-ExecStop=/usr/local/bin/docker-compose stop nginx
-PrivateTmp=true
-RemainAfterExit=true
