@@ -1,0 +1,6 @@
+#!/bin/bash
+
+
+cd $COMPOSE_CONTEXT
+
+/controller/bin/python /controller/bin/docker-compose $@

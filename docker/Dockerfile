@@ -7,10 +7,14 @@ FROM debian:stretch-slim
 MAINTAINER Ryan Northey <ryan@synca.io>
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    container=docker
+    container=docker \
+    APP_DIR=/controller \
+    APP_USER_ID=1000 \
+    APP_USERNAME=controller
 
-COPY start_systemd /usr/local/bin/start_systemd
+
 COPY install-docker.sh /tmp/install-docker.sh
+COPY docker-compose /usr/local/bin/docker-compose
 
 RUN /tmp/install-docker.sh
 
@@ -21,7 +25,10 @@ RUN apt-get update -qq \
         -qq \
         --no-install-recommends \
 	-t stretch-backports \
+        python-minimal \
+        python-setuptools \
         systemd \
+        virtualenv \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && apt-get clean
 
@@ -37,6 +44,9 @@ RUN cd /lib/systemd/system/sysinit.target.wants/; ls | grep -v systemd-tmpfiles-
     rm -rf /lib/systemd/system/systemd-update-utmp*;
 RUN systemctl set-default multi-user.target
 
+USER controller
+RUN cd /controller && virtualenv . && . bin/activate && pip install docker-compose
+USER root
+
 VOLUME [ "/sys/fs/cgroup" ]
 ENTRYPOINT ["/lib/systemd/systemd"]
-

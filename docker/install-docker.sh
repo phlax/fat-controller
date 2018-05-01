@@ -17,3 +17,15 @@ add-apt-repository \
    stable"
 apt-get update
 apt-get install -qq --no-install-recommends docker-ce
+
+useradd \
+    -m \
+    -u $APP_USER_ID \
+    -d /home/$APP_USERNAME \
+    -k /etc/skel \
+    -s /bin/bash \
+  $APP_USERNAME
+
+echo "creating app dir: $APP_DIR"
+mkdir -p "$APP_DIR"
+chown -R $APP_USERNAME:$APP_USERNAME "$APP_DIR"
