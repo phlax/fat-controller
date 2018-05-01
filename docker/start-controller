@@ -52,7 +52,7 @@ class Controller(object):
         upstream_config.set('Unit', 'Description', description)
         upstream_config.add_section('Service')
         upstream_config.set('Service', 'ExecStart', '/usr/local/bin/docker-compose up -d %s' % service)
-        upstream_config.set('Service', 'ExecStartPost', "/bin/bash -c 'until [ \"$(/usr/local/bin/docker-compose ps --services --filter \'status=running\' nginx)\" ] && [ -S \"/sockets/nginx.sock\" ]; do sleep 0.1; done;'")
+        upstream_config.set('Service', 'ExecStartPost', "/bin/bash -c 'until [ \"$(/usr/local/bin/docker-compose ps --services --filter \'status=running\' %s)\" ] && [ -S \"/sockets/%s.sock\" ]; do sleep 0.1; done;'" % (service, service))
         upstream_config.set('Service', 'ExecStop', '/usr/local/bin/docker-compose stop %s' % service)
         upstream_config.set('Service', 'PrivateTmp', 'true')
         upstream_config.set('Service', 'RemainAfterExit', 'true')
