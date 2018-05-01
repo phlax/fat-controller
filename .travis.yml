@@ -1,0 +1,53 @@
+# https://travis-ci.org/#!/phlax/fat-controller
+dist: trusty
+sudo: true
+language: python
+services:
+  - docker
+
+install:
+  - pip install -U docker-compose
+
+script:
+
+  # build the fat controller
+  - docker-compose build fat-controller
+
+  # set the environment
+  - echo "COMPOSE_FILE=./example/docker-compose.controller.yml" > ./.env
+  - echo "COMPOSE_IGNORE_ORPHANS='true'" >> ./.env
+  - envsubst < example/controller.conf.in > example/controller.conf
+
+  # up...
+  - docker-compose up -d fat-controller
+
+  # nginx is not active
+  - docker-compose exec fat-controller docker-compose ps
+  - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
+
+  # fetch a page
+  - curl http://localhost:8080
+
+  # nginx is active now
+  - docker-compose exec fat-controller docker-compose ps
+  - docker-compose exec fat-controller systemctl status --no-pager controller-nginx
+  - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
+
+  # stop nginx
+  - docker-compose exec fat-controller systemctl stop controller-nginx
+  - docker-compose exec fat-controller docker-compose ps
+  - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
+
+  # request a page again
+  - curl http://localhost:8080
+
+  # nginx is back
+  - docker-compose exec fat-controller docker-compose ps
+  - docker-compose exec fat-controller systemctl status --no-pager controller-nginx
+  - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
+
+after_success:
+
+  - docker-compose build fat-controller
+  - echo "$DOCKER_PASSWORD" | docker login -u phlax --password-stdin
+  - docker push phlax/fat-controller
