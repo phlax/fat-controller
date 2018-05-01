@@ -1,0 +1,78 @@
+#!/usr/bin/python
+
+import commands
+import os
+from ConfigParser import ConfigParser
+
+
+DEFAULTS = dict(description='')
+CFG_CONTROLLER = '/etc/controller.conf'
+
+
+class Controller(object):
+
+    def __init__(self):
+        self.config = ConfigParser(DEFAULTS)
+        self.config.read(CFG_CONTROLLER)
+
+    def clear_service_files(self):
+        for f in [x for x in os.listdir('/etc/systemd/system') if x.startswith('controller-')]:
+            os.unlink('/etc/systemd/system/%s' % f)
+
+    def create_env_file(self):
+        env = 'COMPOSE_CONTEXT=%s\nDOCKER_HOST=%s' % (self.config.get('controller', 'context'), 'unix:///fat/docker.sock')
+        open('/etc/controller.env', 'w').write(env)
+
+    def generate_service_files(self, service):
+        listen = self.config.get("service:%s" % service, 'listen')
+        description = self.config.get("service:%s" % service, 'description')
+
+        socket_config = ConfigParser()
+        socket_config.optionxform = str
+        socket_config.add_section('Socket')
+        socket_config.set('Socket', 'ListenStream', listen)
+        socket_config.add_section('Install')
+        socket_config.set('Install', 'WantedBy', 'sockets.target')
+        socket_config.write(open('/etc/systemd/system/controller-%s--proxy.socket' % service, 'wb'))
+
+        service_config = ConfigParser()
+        service_config.optionxform = str
+        service_config.add_section('Unit')
+        service_config.set('Unit', 'Requires', 'controller-%s.service' % service)
+        service_config.set('Unit', 'After', 'controller-%s.service' % service)
+        service_config.add_section('Service')
+        service_config.set('Service', 'ExecStart', '/lib/systemd/systemd-socket-proxyd /sockets/%s.sock' % service)
+        service_config.set('Service', 'PrivateTmp', 'yes')
+        service_config.set('Service', 'PrivateNetwork', 'yes')
+        service_config.write(open('/etc/systemd/system/controller-%s--proxy.service' % service, 'wb'))
+
+        upstream_config = ConfigParser()
+        upstream_config.optionxform = str
+        upstream_config.add_section('Unit')
+        upstream_config.set('Unit', 'Description', description)
+        upstream_config.add_section('Service')
+        upstream_config.set('Service', 'ExecStart', '/usr/local/bin/docker-compose up -d %s' % service)
+        upstream_config.set('Service', 'ExecStartPost', "/bin/bash -c 'until [ \"$(/usr/local/bin/docker-compose ps --services --filter \'status=running\' nginx)\" ] && [ -S \"/sockets/nginx.sock\" ]; do sleep 0.1; done;'")
+        upstream_config.set('Service', 'ExecStop', '/usr/local/bin/docker-compose stop %s' % service)
+        upstream_config.set('Service', 'PrivateTmp', 'true')
+        upstream_config.set('Service', 'RemainAfterExit', 'true')
+        upstream_config.write(open('/etc/systemd/system/controller-%s.service' % service, 'wb'))
+
+    def update_systemd(self):
+        self.clear_service_files()
+        for service in self.services:
+            self.generate_service_files(service)
+        self.create_env_file()
+
+    @property
+    def services(self):
+        for section in [s for s in self.config.sections() if s.startswith('service:')]:
+            yield section[8:]
+
+    def start_systemd(self):
+        for service in self.services:
+            print commands.getoutput('systemctl start controller-%s--proxy.socket' % service)
+
+
+Controller().update_systemd()
+Controller().start_systemd()

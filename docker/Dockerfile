@@ -13,6 +13,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     APP_USERNAME=controller
 
 
+COPY controller.service /etc/systemd/system/controller.service
 COPY install-docker.sh /tmp/install-docker.sh
 COPY docker-compose /usr/local/bin/docker-compose
 
@@ -43,10 +44,14 @@ RUN cd /lib/systemd/system/sysinit.target.wants/; ls | grep -v systemd-tmpfiles-
     rm -rf /lib/systemd/system/plymouth*; \
     rm -rf /lib/systemd/system/systemd-update-utmp*;
 RUN systemctl set-default multi-user.target
+RUN systemctl enable controller
 
 USER controller
 RUN cd /controller && virtualenv . && . bin/activate && pip install docker-compose
 USER root
+
+COPY start-controller /usr/local/bin/start-controller
+COPY stop-controller /usr/local/bin/stop-controller
 
 VOLUME [ "/sys/fs/cgroup" ]
 ENTRYPOINT ["/lib/systemd/systemd"]
