@@ -8,8 +8,14 @@ services:
     build:
       context: ./docker
     volumes:
-      - etc-systemd:/etc/systemd/system
+      - /var/run/docker.sock:/fat/docker.sock
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - sockets:/sockets
     privileged: true
+    environment:
+      DOCKER_HOST: 'unix:///fat/docker.sock'
+      COMPOSE_CONTEXT: ${PWD}
+      COMPOSE_IGNORE_ORPHANS: 'true'
 
 volumes:
-  etc-systemd:
+  sockets:
