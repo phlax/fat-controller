@@ -1,0 +1,12 @@
+#!/bin/bash
+
+SERVICES=${@:1}
+
+echo "Spawning services: $SERVICES"
+
+cores=$(fgrep -c processor /proc/cpuinfo)
+
+printf '%s\n' "${SERVICES[@]}" | xargs --max-procs=$cores  \
+      --replace \
+      --verbose \
+      /bin/sh -c "echo starting {} && COMPOSE_IGNORE_ORPHANS=true /usr/local/bin/docker-compose --no-ansi --skip-hostname-check up -d --no-build --no-recreate {}"

@@ -51,7 +51,8 @@ RUN cd /controller && virtualenv . && . bin/activate && pip install docker-compo
 USER root
 
 COPY start-controller /usr/local/bin/start-controller
-COPY stop-controller /usr/local/bin/stop-controller
+COPY start-service /usr/local/bin/start-service
+COPY wait-for-service /usr/local/bin/wait-for-service
 
 VOLUME [ "/sys/fs/cgroup" ]
 ENTRYPOINT ["/lib/systemd/systemd"]

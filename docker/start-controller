@@ -5,7 +5,7 @@ import os
 from ConfigParser import ConfigParser
 
 
-DEFAULTS = dict(description='')
+DEFAULTS = dict(description='', services='', socket='', compose='')
 CFG_CONTROLLER = '/etc/controller.conf'
 
 
@@ -26,6 +26,10 @@ class Controller(object):
     def generate_service_files(self, service):
         listen = self.config.get("service:%s" % service, 'listen')
         description = self.config.get("service:%s" % service, 'description')
+        services = self.config.get("service:%s" % service, 'services') or service
+        socket = self.config.get("service:%s" % service, 'socket') or ("/sockets/%s.sock" % service)
+        compose = self.config.get("service:%s" % service, 'compose')
+        env = ''
 
         socket_config = ConfigParser()
         socket_config.optionxform = str
@@ -41,7 +45,7 @@ class Controller(object):
         service_config.set('Unit', 'Requires', 'controller-%s.service' % service)
         service_config.set('Unit', 'After', 'controller-%s.service' % service)
         service_config.add_section('Service')
-        service_config.set('Service', 'ExecStart', '/lib/systemd/systemd-socket-proxyd /sockets/%s.sock' % service)
+        service_config.set('Service', 'ExecStart', '/lib/systemd/systemd-socket-proxyd %s' % socket)
         service_config.set('Service', 'PrivateTmp', 'yes')
         service_config.set('Service', 'PrivateNetwork', 'yes')
         service_config.write(open('/etc/systemd/system/controller-%s--proxy.service' % service, 'wb'))
@@ -51,9 +55,9 @@ class Controller(object):
         upstream_config.add_section('Unit')
         upstream_config.set('Unit', 'Description', description)
         upstream_config.add_section('Service')
-        upstream_config.set('Service', 'ExecStart', '/usr/local/bin/docker-compose up -d %s' % service)
-        upstream_config.set('Service', 'ExecStartPost', "/bin/bash -c 'until [ \"$(/usr/local/bin/docker-compose ps --services --filter \'status=running\' %s)\" ] && [ -S \"/sockets/%s.sock\" ]; do sleep 0.1; done;'" % (service, service))
-        upstream_config.set('Service', 'ExecStop', '/usr/local/bin/docker-compose stop %s' % service)
+        upstream_config.set('Service', 'ExecStart', '%s/usr/local/bin/start-service %s' % (env, services))
+        upstream_config.set('Service', 'ExecStartPost', "%s/usr/local/bin/wait-for-service %s %s" % (env, service, socket))
+        upstream_config.set('Service', 'ExecStop', '%s/usr/local/bin/docker-compose stop %s' % (env, service))
         upstream_config.set('Service', 'PrivateTmp', 'true')
         upstream_config.set('Service', 'RemainAfterExit', 'true')
         upstream_config.write(open('/etc/systemd/system/controller-%s.service' % service, 'wb'))

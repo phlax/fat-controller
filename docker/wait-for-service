@@ -1,0 +1,8 @@
+#!/bin/bash
+
+SERVICE=$1
+SOCKET=$2
+
+until [ "$(/usr/local/bin/docker-compose ps --services --filter 'status=running' $SERVICE)" ] && [ -S "$SOCKET" ]; do
+    sleep 0.1;
+done
