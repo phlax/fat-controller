@@ -1,0 +1,8 @@
+[Unit]
+Requires=nginx.service
+After=nginx.service
+
+[Service]
+ExecStart=/lib/systemd/systemd-socket-proxyd /sockets/nginx.sock
+PrivateTmp=yes
+PrivateNetwork=yes

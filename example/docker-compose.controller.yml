@@ -1,0 +1,35 @@
+# docker-compose for Fat controller example stack
+#
+version: "2.4"
+services:
+
+  fat-controller:
+    image: phlax/fat-controller
+    build:
+      context: ../docker
+    ports:
+      - 8080:8080
+      - 8081:8081
+    volumes:
+      - /var/run/docker.sock:/fat/docker.sock
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - sockets:/sockets
+
+      - ./bin/start-nginx:/usr/local/bin/start-nginx
+      - ./bin/wait-for-nginx:/usr/local/bin/wait-for-nginx
+
+      - ./env.conf:/etc/systemd/system.conf.d/10-default-env.conf
+      - ./systemd/echo-proxy.socket:/etc/systemd/system/echo-proxy.socket
+      - ./systemd/nginx-proxy.socket:/etc/systemd/system/nginx-proxy.socket
+      - ./systemd/nginx-proxy.service:/etc/systemd/system/nginx-proxy.service
+      - ./systemd/nginx.service:/etc/systemd/system/nginx.service
+
+      - .:${PWD}/example
+    privileged: true
+    environment:
+      DOCKER_HOST: 'unix:///fat/docker.sock'
+      COMPOSE_CONTEXT: ${PWD}/example
+      COMPOSE_IGNORE_ORPHANS: 'true'
+
+volumes:
+  sockets:

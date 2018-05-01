@@ -1,0 +1,22 @@
+# docker-compose for Fat controller example stack
+#
+version: "2.4"
+services:
+
+  socket-service:
+    image: debian:stretch-slim
+    volumes:
+      - $COMPOSE_CONTEXT/socket-service.py:/usr/local/bin/socket-service.py
+      - sockets:/sockets
+    entrypoint: ["/usr/local/bin/socket-service.py"]
+
+  nginx:
+    image: nginx
+    restart: 'no'
+    volumes:
+      - sockets:/sockets
+      - $COMPOSE_CONTEXT/nginx/conf.d:/etc/nginx/conf.d
+      - $COMPOSE_CONTEXT/nginx/index.html:/usr/share/nginx/html/index.html
+
+volumes:
+  sockets:
