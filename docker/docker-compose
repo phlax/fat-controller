@@ -7,4 +7,7 @@ export DOCKER_HOST=$DOCKER_HOST
 
 cd $COMPOSE_CONTEXT
 
+echo "Using loaded environment: $COMPOSE_CONTEXT"
+
+
 /controller/bin/python /controller/bin/docker-compose $@
