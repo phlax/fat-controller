@@ -6,7 +6,7 @@ from ConfigParser import ConfigParser
 
 import yaml
 
-DEFAULTS = dict(description='', services='', socket='', compose='')
+DEFAULTS = dict(description='', services='', socket='', compose='', service='', name='')
 CFG_CONTROLLER = '/etc/controller.conf'
 PATH_CONTROLLER_VAR = '/var/lib/controller'
 
@@ -53,7 +53,7 @@ class Controller(object):
             ("%s-%s" % (s, name))
             for s
             in self.config.get("service:%s" % name, 'services').split(" ")
-            if s]
+            if s] or [self.get_service(name)]
 
     def get_service(self, name):
         service = self.config.get("service:%s" % name, 'service')
@@ -63,14 +63,14 @@ class Controller(object):
             else name)
 
     def generate_service_files(self, name):
-        app = self.config.get('controller', 'context')
+        context = self.config.get('controller', 'context')
+        app = self.config.get('controller', 'name') or os.path.basename(context)
         listen = self.config.get("service:%s" % name, 'listen')
         description = self.config.get("service:%s" % name, 'description')
         socket = self.config.get("service:%s" % name, 'socket') or ("/sockets/%s.sock" % name)
         compose = self.config.get("service:%s" % name, 'compose')
         service = self.get_service(name)
         services = self.get_services(name)
-        services = services or [service]
         env = ''
 
         socket_config = ConfigParser()
