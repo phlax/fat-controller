@@ -2,26 +2,36 @@
 
 set -e
 
-SOCKET=$1
-SERVICES=${@:2}
+APP=$1
+NAME=$2
+SOCKET=$3
+SERVICE=$4
+SERVICES=(${@:5})
 
-echo "Spawning services: $SERVICES"
+DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
+
+echo "Spawning services: ${SERVICES[@]}"
 
 cores=$(fgrep -c processor /proc/cpuinfo)
 
 export COMPOSE_IGNORE_ORPHANS=true
 
+echo "Checking status for $SERVICE"
 
-if [ -S "$SOCKET" ]; then
-    if [ -z $(/usr/local/bin/docker-compose --skip-hostname-check ps -q --filter 'status=running' $SERVICE)  ]; then
-        exit 0
-    else
-        echo "Removing stale socket: $SOCKET"
-        rm $SOCKET;
+function check_status () {
+    if [ -S "$SOCKET" ]; then
+	if [ -z $(/usr/local/bin/docker-compose -p $APP -f $DC_FILE --skip-hostname-check ps -q --filter 'status=running' $SERVICE)  ]; then
+            exit 0
+	else
+            echo "Removing stale socket: $SOCKET"
+            rm $SOCKET;
+	fi
     fi
-fi
+}
+check_status
+
+echo "Using $cores cores to initiate container"
 
 printf '%s\n' "${SERVICES[@]}" | xargs --max-procs=$cores  \
       --replace \
-      --verbose \
-      /bin/sh -c "echo starting {} && COMPOSE_IGNORE_ORPHANS=true /usr/local/bin/docker-compose --no-ansi --skip-hostname-check up -d --no-build --no-recreate {}"
+      /bin/sh -c "echo starting {} && COMPOSE_IGNORE_ORPHANS=true /usr/local/bin/docker-compose -p $APP -f $DC_FILE --no-ansi --skip-hostname-check up --no-build --no-recreate {}"

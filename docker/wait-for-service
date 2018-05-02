@@ -1,9 +1,14 @@
 #!/bin/bash
 
-SOCKET=$1
-SERVICE=$2
+APP="$1"
+NAME="$2"
+SOCKET="$3"
+SERVICE="$4"
 
+DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
 
-until [ "$(/usr/local/bin/docker-compose ps --services --filter 'status=running' $SERVICE)" ] && [ -S "$SOCKET" ]; do
+echo "Checking service $SERVICE on $SOCKET"
+
+until [ -S "$SOCKET" ] && [ "$(/usr/local/bin/docker-compose -p $APP ps --services --filter 'status=running' $SERVICE)" ]; do
     sleep 0.1;
 done

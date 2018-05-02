@@ -1,11 +1,15 @@
 #!/bin/bash
 
-SOCKET=$1
-SERVICE=$2
+APP=$1
+NAME=$2
+SOCKET=$3
+SERVICE=$4
+
+DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
 
 echo "Stopping service $SERVICE"
 
-/usr/local/bin/docker-compose stop $SERVICE
+/usr/local/bin/docker-compose -p $APP -f $DC_FILE stop $SERVICE
 
 if [ -S "$SOCKET" ]; then
     rm $SOCKET
