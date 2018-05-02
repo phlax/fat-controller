@@ -47,7 +47,7 @@ RUN systemctl set-default multi-user.target
 RUN systemctl enable controller
 
 USER controller
-RUN cd /controller && virtualenv . && . bin/activate && pip install docker-compose
+RUN cd /controller && virtualenv . && . bin/activate && pip install docker-compose pyyaml
 USER root
 
 COPY start-controller /usr/local/bin/start-controller
