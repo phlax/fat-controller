@@ -6,11 +6,9 @@ SOCKET=$3
 SERVICE=$4
 
 DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
+export DOCKER_HOST=unix:///fat/docker.sock
+
 
 echo "Stopping service $SERVICE"
-
-/usr/local/bin/docker-compose -p $APP -f $DC_FILE stop $SERVICE
-
-if [ -S "$SOCKET" ]; then
-    rm $SOCKET
-fi
+TARGET_CONTAINER="${APP}_${SERVICE}_1"
+docker checkpoint create $TARGET_CONTAINER $SERVICE

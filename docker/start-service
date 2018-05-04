@@ -9,18 +9,32 @@ SERVICE=$4
 SERVICES=(${@:5})
 
 DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
+DC="/usr/local/bin/docker-compose -p $APP -f $DC_FILE --skip-hostname-check --no-ansi"
 
 echo "Spawning services: ${SERVICES[@]}"
 
 cores=$(fgrep -c processor /proc/cpuinfo)
 
 export COMPOSE_IGNORE_ORPHANS=true
+export DOCKER_HOST=unix:///fat/docker.sock
 
-echo "Checking status for $SERVICE"
+
+TARGET_CONTAINER="${APP}_${SERVICE}_1"
+echo "Checking for saved containers for...: $TARGET_CONTAINER"
+SAVED=$(docker checkpoint ls $TARGET_CONTAINER | tail -n+2)
+
+
+if [ ! -z "$SAVED" ]; then
+    echo "Restoring from checkpoint"
+    docker start --checkpoint=$SERVICE $TARGET_CONTAINER  && docker checkpoint rm $TARGET_CONTAINER $SERVICE
+    exit 0
+fi
+
 
 function check_status () {
+    echo "Checking status for $SERVICE"
     if [ -S "$SOCKET" ]; then
-	if [ -z $(/usr/local/bin/docker-compose -p $APP -f $DC_FILE --skip-hostname-check ps -q --filter 'status=running' $SERVICE)  ]; then
+	if [ -z $($DC ps -q --filter 'status=running' $SERVICE)  ]; then
             exit 0
 	else
             echo "Removing stale socket: $SOCKET"
@@ -30,8 +44,8 @@ function check_status () {
 }
 check_status
 
-echo "Using $cores cores to initiate container"
 
+echo "Using $cores cores to initiate container"
 printf '%s\n' "${SERVICES[@]}" | xargs --max-procs=$cores  \
       --replace \
-      /bin/sh -c "echo starting {} && COMPOSE_IGNORE_ORPHANS=true /usr/local/bin/docker-compose -p $APP -f $DC_FILE --no-ansi --skip-hostname-check up --no-build --no-recreate {}"
+      /bin/sh -c "echo starting {} && $DC up -d --no-build --no-recreate {}"
