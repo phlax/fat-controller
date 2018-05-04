@@ -4,7 +4,7 @@ set -e
 
 apt-get update
 apt-get install -qq \
-     --no-install-recommends \
+	--no-install-recommends \
      apt-transport-https \
      ca-certificates \
      curl \
