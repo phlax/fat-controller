@@ -5,10 +5,22 @@ language: python
 services:
   - docker
 
+before_install:
+  - "echo '{\"storage-driver\": \"overlay2\", \"experimental\": true}' | sudo tee /etc/docker/daemon.json"
+  - "sudo apt-get install -qq -y --allow-downgrades docker-ce=17.05.0~ce-0~ubuntu-trusty"
+
 install:
+  - sudo apt-get install -qq -y libprotobuf-c0 libprotobuf-lite8 libnet1 libnl-3-200 iptables
+  # - sudo apt-get install -qq -y bzip2 libprotobuf-dev libprotobuf-c0-dev protobuf-c-compiler protobuf-compiler python-protobuf libnl-3-dev libcap-dev libnet1-dev build-essential
   - pip install -U docker-compose
+  - CRIU_CONTAINER=$(docker run -d --rm phlax/debian-criu:ubuntu-trusty)
+  - sudo docker cp $CRIU_CONTAINER:/usr/local/bin/criu /usr/local/bin/criu
+  - docker kill $CRIU_CONTAINER
+  - cd /home/travis/build/phlax/fat-controller
 
 script:
+
+  - docker version
 
   # build the fat controller
   - docker-compose build fat-controller
@@ -33,21 +45,23 @@ script:
   - docker-compose exec fat-controller systemctl status --no-pager controller-nginx
   - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
 
-  # stop nginx
+  # stop nginx, checkpoint was created
   - docker-compose exec fat-controller systemctl stop controller-nginx
   - docker-compose exec fat-controller docker-compose ps
   - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
+  - docker checkpoint ls example_nginx_1
 
   # request a page again
   - curl http://localhost:8080
 
-  # nginx is back
+  # nginx is back - checkpoint was destroyed
   - docker-compose exec fat-controller docker-compose ps
-  - docker-compose exec fat-controller systemctl status --no-pager controller-nginx
+  - docker-compose exec fat-controller systemctl status -l --no-pager controller-nginx
   - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
+  - docker checkpoint ls example_nginx_1
 
 after_success:
 
   - docker-compose build fat-controller
-  - echo "$DOCKER_PASSWORD" | docker login -u phlax --password-stdin
+  - docker login -u phlax -p "$DOCKER_PASSWORD"
   - docker push phlax/fat-controller
