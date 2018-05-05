@@ -14,7 +14,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     APP_USER_ID=1000 \
     APP_USERNAME=controller
 
-
 COPY controller.service /etc/systemd/system/controller.service
 COPY install-docker.sh /tmp/install-docker.sh
 COPY docker-compose /usr/local/bin/docker-compose
@@ -48,20 +47,6 @@ RUN cd /lib/systemd/system/sysinit.target.wants/; ls | grep -v systemd-tmpfiles-
 RUN systemctl set-default multi-user.target
 RUN systemctl enable controller
 
-
-# App stage
-FROM root as builder
-
-COPY install-build.sh /tmp/install-build.sh
-RUN /tmp/install-build.sh
-
-COPY install-criu.sh /tmp/install-criu.sh
-RUN /tmp/install-criu.sh
-
-
-# App stage
-FROM root
-
 USER controller
 RUN cd /controller && virtualenv . && . bin/activate && pip install docker-compose pyyaml
 USER root
@@ -70,10 +55,6 @@ COPY start-controller /usr/local/bin/start-controller
 COPY start-service /usr/local/bin/start-service
 COPY wait-for-service /usr/local/bin/wait-for-service
 COPY stop-service /usr/local/bin/stop-service
-
-# this makes the criu binary available for stretch - runtime libs are also required
-# libprotobuf-lite10 libprotobuf-c1 libnl-3-200
-COPY --from=builder /tmp/criu/criu-3.8.1/criu/criu /usr/local/bin/criu
 
 VOLUME [ "/sys/fs/cgroup" ]
 ENTRYPOINT ["/lib/systemd/systemd"]
