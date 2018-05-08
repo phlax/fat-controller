@@ -55,6 +55,7 @@ COPY start-controller /usr/local/bin/start-controller
 COPY start-service /usr/local/bin/start-service
 COPY wait-for-service /usr/local/bin/wait-for-service
 COPY stop-service /usr/local/bin/stop-service
+COPY start-proxy /usr/local/bin/start-proxy
 
 VOLUME [ "/sys/fs/cgroup" ]
 ENTRYPOINT ["/lib/systemd/systemd"]

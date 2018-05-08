@@ -7,8 +7,15 @@ SERVICE="$4"
 
 DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
 
-echo "Checking service $SERVICE on $SOCKET"
-
-until [ -S "$SOCKET" ] && [ "$(/usr/local/bin/docker-compose -p $APP ps --services --filter 'status=running' $SERVICE)" ]; do
-    sleep 0.1;
-done
+if [[ $SOCKET == /* ]]; then
+    echo "Checking service $SERVICE on $SOCKET"
+    until [ -S "$SOCKET" ] && [ "$(/usr/local/bin/docker-compose -p $APP ps --services --filter 'status=running' $SERVICE)" ]; do
+        sleep 0.1;
+    done
+else
+    echo "Checking for remote $SERVICE: $SOCKET"
+    until $(curl --output /dev/null --silent --head --fail https://$SOCKET); do
+        sleep 0.1;
+    done
+fi
+echo "Service ($SERVICE) is up on $SOCKET!"

@@ -33,6 +33,8 @@ class Controller(object):
         config = yaml.load(config)
         new_config = dict(services={}, volumes={}, networks={})
         for service in self.get_services(name):
+            if not config['services'].get(service):
+                continue
             new_config['services'][service] = config['services'][service]
             for volume in new_config['services'][service].get('volumes', []):
                 if volume.startswith('/'):
@@ -87,9 +89,9 @@ class Controller(object):
         service_config.set('Unit', 'Requires', 'controller-%s.service' % name)
         service_config.set('Unit', 'After', 'controller-%s.service' % name)
         service_config.add_section('Service')
-        service_config.set('Service', 'ExecStart', '/lib/systemd/systemd-socket-proxyd %s' % socket)
+        service_config.set('Service', 'ExecStart', '/usr/local/bin/start-proxy %s' % socket)
         service_config.set('Service', 'PrivateTmp', 'yes')
-        service_config.set('Service', 'PrivateNetwork', 'yes')
+        service_config.set('Service', 'PrivateNetwork', ('yes' if socket.startswith('/') else 'no'))
         service_config.write(open('/etc/systemd/system/controller-%s--proxy.service' % name, 'wb'))
 
         upstream_config = ConfigParser()
