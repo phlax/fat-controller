@@ -1,0 +1,122 @@
+#!/controller/bin/python
+
+import commands
+import os
+from ConfigParser import ConfigParser
+
+import yaml
+
+DEFAULTS = dict(description='', services='', socket='', compose='', service='', name='')
+CFG_CONTROLLER = '/etc/controller.conf'
+PATH_CONTROLLER_VAR = '/var/lib/controller'
+
+
+class Controller(object):
+
+    def __init__(self):
+        self.config = ConfigParser(DEFAULTS)
+        self.config.read(CFG_CONTROLLER)
+
+    def clear_service_files(self):
+        for f in [x for x in os.listdir('/etc/systemd/system') if x.startswith('controller-')]:
+            os.unlink('/etc/systemd/system/%s' % f)
+
+    def create_env_file(self):
+        env = 'COMPOSE_CONTEXT=%s\nDOCKER_HOST=%s' % (self.config.get('controller', 'context'), 'unix:///fat/docker.sock')
+        open('/etc/controller.env', 'w').write(env)
+
+    def generate_compose_file(self, name):
+        var_path = os.path.join(PATH_CONTROLLER_VAR, name)
+        if not os.path.exists(var_path):
+            os.makedirs(var_path)
+        config = commands.getoutput('docker-compose config')
+        config = yaml.load(config)
+        new_config = dict(services={}, volumes={}, networks={})
+        for service in self.get_services(name):
+            if not config['services'].get(service):
+                continue
+            new_config['services'][service] = config['services'][service]
+            for volume in new_config['services'][service].get('volumes', []):
+                if volume.startswith('/'):
+                    continue
+                new_config['volumes'][volume.split(':')[0]] = {}
+            for network in new_config['services'][service].get('networks', []):
+                if network.startswith('/'):
+                    continue
+                new_config['networks'][network.split(':')[0]] = {}
+        new_config['version'] = config['version']
+        yaml.dump(
+            new_config,
+            open(os.path.join(var_path, 'docker-compose.yml'), 'wb'),
+            default_flow_style=False)
+
+    def get_services(self, name):
+        return [
+            ("%s-%s" % (s, name))
+            for s
+            in self.config.get("service:%s" % name, 'services').split(" ")
+            if s] or [self.get_service(name)]
+
+    def get_service(self, name):
+        service = self.config.get("service:%s" % name, 'service')
+        return (
+            "%s-%s" % (service, name)
+            if service
+            else name)
+
+    def generate_service_files(self, name):
+        context = self.config.get('controller', 'context')
+        app = self.config.get('controller', 'name') or os.path.basename(context)
+        listen = self.config.get("service:%s" % name, 'listen')
+        description = self.config.get("service:%s" % name, 'description')
+        socket = self.config.get("service:%s" % name, 'socket') or ("/sockets/%s.sock" % name)
+        compose = self.config.get("service:%s" % name, 'compose')
+        service = self.get_service(name)
+        services = self.get_services(name)
+        env = ''
+
+        socket_config = ConfigParser()
+        socket_config.optionxform = str
+        socket_config.add_section('Socket')
+        socket_config.set('Socket', 'ListenStream', listen)
+        socket_config.add_section('Install')
+        socket_config.set('Install', 'WantedBy', 'sockets.target')
+        socket_config.write(open('/etc/systemd/system/controller-%s--proxy.socket' % name, 'wb'))
+
+        service_config = ConfigParser()
+        service_config.optionxform = str
+        service_config.add_section('Unit')
+        service_config.set('Unit', 'Requires', 'controller-%s.service' % name)
+        service_config.set('Unit', 'After', 'controller-%s.service' % name)
+        service_config.add_section('Service')
+        service_config.set('Service', 'ExecStart', '/usr/local/bin/start-proxy %s' % socket)
+        service_config.set('Service', 'PrivateTmp', 'yes')
+        service_config.set('Service', 'PrivateNetwork', ('yes' if socket.startswith('/') else 'no'))
+        service_config.write(open('/etc/systemd/system/controller-%s--proxy.service' % name, 'wb'))
+
+        upstream_config = ConfigParser()
+        upstream_config.optionxform = str
+        upstream_config.add_section('Unit')
+        upstream_config.set('Unit', 'Description', description)
+        upstream_config.add_section('Service')
+        upstream_config.set('Service', 'ExecStart', '%s/usr/local/bin/start-service %s %s %s %s %s' % (env, app, name, socket, service, " ".join(services)))
+        upstream_config.set('Service', 'ExecStartPost', "%s/usr/local/bin/wait-for-service %s %s %s %s" % (env, app, name, socket, service))
+        upstream_config.set('Service', 'ExecStop', '%s/usr/local/bin/stop-service %s %s %s %s' % (env, app, name, socket, service))
+        upstream_config.set('Service', 'PrivateTmp', 'true')
+        upstream_config.set('Service', 'RemainAfterExit', 'true')
+        upstream_config.write(open('/etc/systemd/system/controller-%s.service' % name, 'wb'))
+
+    def update_systemd(self):
+        self.clear_service_files()
+        self.create_env_file()
+        for name in self.services:
+            self.generate_service_files(name)
+            self.generate_compose_file(name)
+
+    @property
+    def services(self):
+        for section in [s for s in self.config.sections() if s.startswith('service:')]:
+            yield section[8:]
+
+
+Controller().update_systemd()

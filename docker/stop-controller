@@ -1,3 +1,3 @@
-#!/usr/bin/python
+#!/bin/bash
 
-print "Stopping controller..."
+docker-compose -p apps stop

@@ -15,6 +15,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     APP_USERNAME=controller
 
 COPY controller.service /etc/systemd/system/controller.service
+COPY daemon-controller.service /etc/systemd/system/daemon-controller.service
+COPY configuration.service /etc/systemd/system/configuration.service
 COPY install-docker.sh /tmp/install-docker.sh
 COPY docker-compose /usr/local/bin/docker-compose
 
@@ -51,10 +53,18 @@ USER controller
 RUN cd /controller && virtualenv . && . bin/activate && pip install docker-compose pyyaml
 USER root
 
+COPY configure-controller /usr/local/bin/configure-controller
+
 COPY start-controller /usr/local/bin/start-controller
+COPY stop-controller /usr/local/bin/stop-controller
+
+COPY start-daemons /usr/local/bin/start-daemons
+COPY stop-daemons /usr/local/bin/stop-daemons
+
 COPY start-service /usr/local/bin/start-service
 COPY wait-for-service /usr/local/bin/wait-for-service
 COPY stop-service /usr/local/bin/stop-service
+
 COPY start-proxy /usr/local/bin/start-proxy
 
 STOPSIGNAL 37

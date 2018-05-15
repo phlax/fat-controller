@@ -1,0 +1,10 @@
+[Unit]
+Description=Controller configuration service
+
+[Service]
+ExecStart=/usr/local/bin/configure-controller
+PrivateTmp=true
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target
