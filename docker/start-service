@@ -24,8 +24,10 @@ if [[ $SOCKET == /* ]]; then
 
     TARGET_CONTAINER="${APP}_${SERVICE}_1"
     echo "Checking for saved containers for...: $TARGET_CONTAINER"
-    SAVED=$(docker checkpoint ls $TARGET_CONTAINER | tail -n+2)
 
+    if [ ! -z "$USE_CRIU" ]; then
+        SAVED=$(docker checkpoint ls $TARGET_CONTAINER | tail -n+2)
+    fi
 
     if [ ! -z "$SAVED" ]; then
         echo "Restoring from checkpoint"
@@ -33,17 +35,15 @@ if [[ $SOCKET == /* ]]; then
         exit 0
     fi
 
-
-
     function check_status () {
         echo "Checking status for $SERVICE"
         if [ -S "$SOCKET" ]; then
-	    if [ -z $($DC ps -q --filter 'status=running' $SERVICE)  ]; then
+            if [ -z $($DC ps -q --filter 'status=running' $SERVICE)  ]; then
                 exit 0
-	    else
+            else
                 echo "Removing stale socket: $SOCKET"
                 rm $SOCKET;
-	    fi
+            fi
         fi
     }
     check_status
