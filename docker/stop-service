@@ -8,12 +8,14 @@ SERVICE=$4
 DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
 export DOCKER_HOST=unix:///fat/docker.sock
 
+echo "Stopping service $SERVICE..."
 
-echo "Stopping service $SERVICE"
 TARGET_CONTAINER="${APP}_${SERVICE}_1"
 if [ ! -z "$USE_CRIU" ]; then
     docker checkpoint create $TARGET_CONTAINER $SERVICE
 else
+    echo "Actually stopping service $SERVICE"
     DC="/usr/local/bin/docker-compose -p $APP -f $DC_FILE --skip-hostname-check --no-ansi"
     $DC stop $SERVICE
+    echo "Stopped $SERVICE"
 fi
