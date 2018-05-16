@@ -1,3 +1,26 @@
 #!/bin/bash
 
 echo "Stopping controller daemons..."
+
+export DOCKER_HOST=unix:///fat/docker.sock
+
+# wait for all other services to quit first
+TIMEOUT=60
+
+DC_FILE=/var/lib/controller/docker-compose.yml
+END=$(( $(date +%s) + TIMEOUT ))
+DAEMONS=$(docker-compose -papps -f $DC_FILE config --services)
+DAEMONCOUNT=$(echo $DAEMONS | wc -w)
+RUNNING=$(docker ps -q --filter "name=apps_" | wc -l)
+APP=apps
+
+if [ $RUNNING -gt $DAEMONCOUNT ]; then
+    echo "Waiting for other procs to die..."
+    while [ $(docker ps -q --filter "name=apps_" | wc -l) -gt $DAEMONCOUNT ] && [ $(date +%s) -lt $END ]; do
+        sleep .2
+    done
+fi
+
+DC="/usr/local/bin/docker-compose -p $APP -f $DC_FILE --skip-hostname-check --no-ansi"
+$DC stop
+echo "All controller daemons stopped"
