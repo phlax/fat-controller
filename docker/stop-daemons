@@ -1,3 +1,3 @@
-#!/usr/bin/python
+#!/bin/bash
 
-print "Stopping controller daemons..."
+echo "Stopping controller daemons..."
