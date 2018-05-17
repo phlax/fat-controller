@@ -9,22 +9,29 @@ SERVICE=$4
 SERVICES=(${@:5})
 
 
-if [[ $SOCKET == /* ]]; then
+function check_socket_status () {
+    echo "Checking status for $SERVICE"
+    if [ -S "$SOCKET" ]; then
+        echo "There is a socket..."
+        if [ ! -z "$(docker ps -q --filter status=running --filter name=$TARGET_CONTAINER)"  ]; then
+            echo "Service seems to be running already: $TARGET_CONTAINER"
+            exit 0
+        else
+            echo "Removing stale socket: $SOCKET"
+            rm $SOCKET;
+        fi
+    fi
+}
 
+if [[ $SOCKET == /* ]]; then
     DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
     DC="/usr/local/bin/docker-compose -p $APP -f $DC_FILE --skip-hostname-check --no-ansi"
-
     echo "Spawning services: ${SERVICES[@]}"
-
     cores=$(fgrep -c processor /proc/cpuinfo)
-
     export COMPOSE_IGNORE_ORPHANS=true
     export DOCKER_HOST=unix:///fat/docker.sock
-
-
     TARGET_CONTAINER="${APP}_${SERVICE}_1"
     echo "Checking for saved containers for...: $TARGET_CONTAINER"
-
     if [ ! -z "$USE_CRIU" ]; then
         SAVED=$(docker checkpoint ls $TARGET_CONTAINER | tail -n+2)
     fi
@@ -34,20 +41,7 @@ if [[ $SOCKET == /* ]]; then
         docker start --checkpoint=$SERVICE $TARGET_CONTAINER  && docker checkpoint rm $TARGET_CONTAINER $SERVICE
         exit 0
     fi
-
-    function check_status () {
-        echo "Checking status for $SERVICE"
-        if [ -S "$SOCKET" ]; then
-            if [ -z $($DC ps -q --filter 'status=running' $SERVICE)  ]; then
-                exit 0
-            else
-                echo "Removing stale socket: $SOCKET"
-                rm $SOCKET;
-            fi
-        fi
-    }
-    check_status
-
+    check_socket_status
     echo "Using $cores cores to initiate container"
     printf '%s\n' "${SERVICES[@]}" | xargs --max-procs=$cores  \
           --replace \
