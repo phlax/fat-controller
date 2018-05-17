@@ -5,11 +5,13 @@ NAME="$2"
 SOCKET="$3"
 SERVICE="$4"
 
-DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
 
 if [[ $SOCKET == /* ]]; then
     echo "Checking service $SERVICE on $SOCKET"
-    until [ -S "$SOCKET" ] && [ "$(/usr/local/bin/docker-compose -p $APP ps --services --filter 'status=running' $SERVICE)" ]; do
+    DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
+    export DOCKER_HOST=unix:///fat/docker.sock
+    TARGET_CONTAINER="${APP}_${SERVICE}_1"
+    until [ -S "$SOCKET" ] && [ ! -z "$(docker ps -q --filter status=running --filter name=$TARGET_CONTAINER)"  ]; do
         sleep 0.1;
     done
 else
