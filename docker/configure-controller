@@ -16,9 +16,9 @@ PATH_CONTROLLER_VAR = '/var/lib/controller'
 
 class Controller(object):
 
-    def __init__(self):
+    def __init__(self, config):
         self.config = ConfigParser(DEFAULTS)
-        self.config.read(CFG_CONTROLLER)
+        self.config.read(config)
         self.clear_service_files()
         self.create_env_file()
         self.docker_config = yaml.load(commands.getoutput('docker-compose config'))
@@ -169,10 +169,20 @@ class Controller(object):
         with open(os.path.join(PATH_CONTROLLER_VAR, 'idle-timeout'), 'w') as f:
             f.write(self.config.get('controller', 'idle-timeout'))
 
+    def setup_zmq_pipe(self):
+        with open('/var/lib/controller/env') as f:
+            env = dict(
+                line.strip().split('=')
+                for line
+                in f.readlines())
+        if env.get('LISTEN_ZMQ') or env.get('PUBLISH_ZMQ'):
+            print("Creating ZMQ pipe")
+            self.generate_service_files('zmq')
+
     def update_systemd(self):
         self.generate_daemon_compose_file()
         self.set_timeout_file()
-
+        self.setup_zmq_pipe()
         for name in self.services:
             self.generate_service_files(name)
             self.generate_compose_file(name)
@@ -183,4 +193,12 @@ class Controller(object):
         for section in [s for s in self.config.sections() if s.startswith('service:')]:
             yield section[8:]
 
-Controller().update_systemd()
+
+def main():
+    print('Configuring from: %s' % CFG_CONTROLLER)
+    Controller(CFG_CONTROLLER).update_systemd()
+    print('All configured from: %s' % CFG_CONTROLLER)
+
+
+if __name__ == '__main__':
+    main()
