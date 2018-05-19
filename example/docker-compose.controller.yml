@@ -8,10 +8,15 @@ services:
     extends:
       service: fat-controller
       file: ../docker-compose.yml
+    # zmq subscriber socket should be started first, if used
+    depends_on:
+    - zmq
     ports:
       - 8080:8080
     volumes:
       - ./controller.conf:/etc/controller.conf
+      - sockets:/sockets
+      - ctrl-sockets:/controller/sockets
       - logs:/var/log/nginx:ro
 
       # this assumes you are running in folder above this file
@@ -21,7 +26,18 @@ services:
       # this assumes you are running in folder above this file
       COMPOSE_CONTEXT: ${PWD}/example
       USE_CRIU: 'true'
+      LISTEN_ZMQ: 'true'
+      PUBLISH_ZMQ: 'true'
+
+  zmq:
+    restart: 'no'
+    image: phlax/zmq
+    environment:
+    - ZMQ_APP_0=ctrl.zmq.pubsub.ZMQSubscriber ipc:///app/sockets/zmq-subscriber.socket ctrl
+    volumes:
+    - ctrl-sockets:/app/sockets
 
 volumes:
-  sockets:
   logs:
+  sockets:
+  ctrl-sockets:

@@ -7,7 +7,6 @@ services:
     image: debian:stretch-slim
     volumes:
       - $COMPOSE_CONTEXT/socket-service.py:/usr/local/bin/socket-service.py
-      - sockets:/sockets
     entrypoint: ["/usr/local/bin/socket-service.py"]
 
   nginx:
@@ -20,5 +19,5 @@ services:
       - $COMPOSE_CONTEXT/nginx/index.html:/usr/share/nginx/html/index.html
 
 volumes:
-  sockets:
   logs:
+  sockets:

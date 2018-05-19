@@ -1,7 +1,13 @@
 [controller]
 context: ${PWD}/example
-idle-timeout: 5
+idle-timeout: 10
 name: example
+# move this!
+apps: ctrl.zmq
+      ctrl.compose
+      ctrl.systemd
+zmq-listen: ipc:///controller/sockets/zmq-rpc.socket
+zmq-publish: ipc:///controller/sockets/zmq-subscriber.socket ctrl
 
 [service:nginx]
 description: Containerized: The NGINX HTTP and reverse proxy server
