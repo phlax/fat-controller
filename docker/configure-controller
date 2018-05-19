@@ -136,8 +136,6 @@ class Controller(object):
         for service in extra_services:
             startup_config['services'][service] = dict(config['services'][service])
 
-        print('here')
-        print(daemons)
         startup_config['networks']['default'] = dict(config['networks']['default'])
         subnet = startup_config['networks']['default']['ipam']['config'][0]['subnet'].split('.')
         subnet[2] = '100'
