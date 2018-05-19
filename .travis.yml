@@ -33,16 +33,21 @@ script:
   # up...
   - docker-compose up -d fat-controller
 
+  - docker-compose exec fat-controller journalctl -u controller
+  - docker-compose exec fat-controller journalctl -u configuration
+  - docker-compose exec fat-controller journalctl -u daemon-controller
+
   # nginx is not active
   - docker-compose exec fat-controller docker-compose ps
   - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
 
   # fetch a page
-  - curl http://localhost:8080
+  - curl -m 5 http://localhost:8080
 
   # nginx is active now
   - docker-compose exec fat-controller docker-compose ps
-  - docker-compose exec fat-controller systemctl status --no-pager controller-nginx
+  #  - docker-compose exec fat-controller systemctl status -l --no-pager controller-nginx
+  - docker-compose exec fat-controller journalctl --all -l --no-pager -u controller-nginx
   - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
 
   # stop nginx, checkpoint was created
@@ -52,13 +57,33 @@ script:
   - docker checkpoint ls example_nginx_1
 
   # request a page again
-  - curl http://localhost:8080
+  - curl -m 5 http://localhost:8080
 
   # nginx is back - checkpoint was destroyed
   - docker-compose exec fat-controller docker-compose ps
   - docker-compose exec fat-controller systemctl status -l --no-pager controller-nginx
   - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
   - docker checkpoint ls example_nginx_1
+
+  # wait for 10 seconds and nginx should have gone away
+  - sleep 10
+
+  - docker-compose exec fat-controller docker-compose ps
+  - docker-compose exec fat-controller journalctl -l --no-pager -u idle.timer
+  - docker-compose exec fat-controller journalctl -l --no-pager -u idle.service
+  - docker-compose exec fat-controller journalctl -l --no-pager -u controller-nginx
+  - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
+  - docker checkpoint ls example_nginx_1
+
+  # request a page again, and its back
+  - curl -m 5 http://localhost:8080
+  - sleep 1
+
+  - docker checkpoint ls example_nginx_1
+
+  - docker-compose stop fat-controller
+  - docker ps -a
+  - docker logs example_nginx_1
 
 after_success:
 
