@@ -1,8 +1,10 @@
-
 [controller]
 context: ${PWD}/example
-
+idle-timeout: 5
+name: example
 
 [service:nginx]
 description: Containerized: The NGINX HTTP and reverse proxy server
 listen: 0.0.0.0:8080
+idle-files: /var/log/nginx/nginx.log
+            /var/log/nginx/error.log

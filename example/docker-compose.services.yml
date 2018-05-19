@@ -15,8 +15,10 @@ services:
     restart: 'no'
     volumes:
       - sockets:/sockets
+      - logs:/var/log/nginx:rw
       - $COMPOSE_CONTEXT/nginx/conf.d:/etc/nginx/conf.d
       - $COMPOSE_CONTEXT/nginx/index.html:/usr/share/nginx/html/index.html
 
 volumes:
   sockets:
+  logs:

@@ -12,6 +12,7 @@ services:
       - 8080:8080
     volumes:
       - ./controller.conf:/etc/controller.conf
+      - logs:/var/log/nginx:ro
 
       # this assumes you are running in folder above this file
       - .:${PWD}/example
@@ -23,3 +24,4 @@ services:
 
 volumes:
   sockets:
+  logs:
