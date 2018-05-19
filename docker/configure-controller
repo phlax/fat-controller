@@ -1,17 +1,17 @@
 #!/controller/bin/python
 
 import commands
+import signal
+import sys
 import os
 from ConfigParser import ConfigParser
 
 import yaml
 
 DEFAULTS = dict(description='', services='', socket='', compose='', service='', name='', daemons='')
+DEFAULTS['idle-files'] = ''
 CFG_CONTROLLER = '/etc/controller.conf'
 PATH_CONTROLLER_VAR = '/var/lib/controller'
-
-import signal
-import sys
 
 
 class Controller(object):
@@ -28,7 +28,10 @@ class Controller(object):
             os.unlink('/etc/systemd/system/%s' % f)
 
     def create_env_file(self):
-        env = 'COMPOSE_CONTEXT=%s\nDOCKER_HOST=%s' % (self.config.get('controller', 'context'), 'unix:///fat/docker.sock')
+        env = (
+            'COMPOSE_CONTEXT=%s\nDOCKER_HOST=%s'
+            % (self.config.get('controller', 'context'),
+               'unix:///fat/docker.sock'))
         open('/etc/controller.env', 'w').write(env)
 
     def generate_compose_file(self, name):
@@ -42,7 +45,7 @@ class Controller(object):
         for service in self.get_services(name):
             if not config['services'].get(service):
                 continue
-            new_config['services'][service] = config['services'][service]
+            new_config['services'][service] = dict(config['services'][service])
             for volume in new_config['services'][service].get('volumes', []):
                 if volume.startswith('/'):
                     continue
@@ -116,6 +119,9 @@ class Controller(object):
         upstream_config.set('Service', 'ExecStartPost', "%s/usr/local/bin/wait-for-service %s %s %s %s" % (env, app, name, socket, service))
         upstream_config.set('Service', 'ExecStop', '%s/usr/local/bin/stop-service %s %s %s %s' % (env, app, name, socket, service))
         upstream_config.set('Service', 'PrivateTmp', 'true')
+        with open('/var/lib/controller/env') as f:
+            for line in f.readlines():
+                upstream_config.set('Service', 'Environment', line.strip())
         upstream_config.set('Service', 'RemainAfterExit', 'true')
         upstream_config.write(open('/etc/systemd/system/controller-%s.service' % name, 'wb'))
 
@@ -127,21 +133,23 @@ class Controller(object):
         daemons = [d for d in self.config.get('controller', 'daemons').split('\n') if d]
         if not daemons:
             return
-        print(daemons)
         extra_services = []
         for daemon in daemons:
             if not config['services'].get(daemon):
+                print('No config for daemon: %s' % daemon)
                 continue
-            startup_config['services'][daemon] = config['services'][daemon]
+            startup_config['services'][daemon] = dict(config['services'][daemon])
             if config['services'][daemon].get('network_mode', '').startswith('service:'):
                 extra_services.append(config['services'][daemon]['network_mode'][8:])
         for service in extra_services:
             startup_config['services'][service] = dict(config['services'][service])
 
-        startup_config['networks']['default'] = dict(config['networks']['default'])
-        subnet = startup_config['networks']['default']['ipam']['config'][0]['subnet'].split('.')
-        subnet[2] = '100'
-        startup_config['networks']['default']['ipam']['config'][0]['subnet'] = '.'.join(subnet)
+        startup_config['volumes'] = dict(config.get('volumes', {}))
+        startup_config['networks'] = dict(config.get('networks', {}))
+        if startup_config['networks'].get('default'):
+            subnet = startup_config['networks']['default']['ipam']['config'][0]['subnet'].split('.')
+            subnet[2] = '100'
+            startup_config['networks']['default']['ipam']['config'][0]['subnet'] = '.'.join(subnet)
         startup_config['version'] = config['version']
         yaml.dump(
             startup_config,
@@ -164,6 +172,7 @@ class Controller(object):
     def update_systemd(self):
         self.generate_daemon_compose_file()
         self.set_timeout_file()
+
         for name in self.services:
             self.generate_service_files(name)
             self.generate_compose_file(name)

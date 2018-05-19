@@ -70,6 +70,7 @@ COPY stop-service /usr/local/bin/stop-service
 
 COPY start-proxy /usr/local/bin/start-proxy
 COPY stop-idle-services /usr/local/bin/stop-idle-services
+COPY controller-entry.sh /usr/local/bin/controller-entry.sh
 
 COPY restore-from-checkpoint /usr/local/bin/restore-from-checkpoint
 COPY checkpoint-service /usr/local/bin/checkpoint-service
@@ -77,4 +78,4 @@ COPY checkpoint-service /usr/local/bin/checkpoint-service
 
 STOPSIGNAL 37
 VOLUME [ "/sys/fs/cgroup" ]
-ENTRYPOINT ["/lib/systemd/systemd"]
+ENTRYPOINT ["/usr/local/bin/controller-entry.sh"]
