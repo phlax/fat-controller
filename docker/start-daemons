@@ -4,4 +4,9 @@ set -e
 
 APP=apps
 DC_FILE=/var/lib/controller/docker-compose.yml
-docker-compose  -f $DC_FILE -p $APP up -d
+
+if [ -f "$DC_FILE" ]; then
+    docker-compose  -f $DC_FILE -p $APP up -d
+else
+    echo "No compose file found for daemons"
+fi

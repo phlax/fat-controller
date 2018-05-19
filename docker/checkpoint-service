@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+SERVICE=$1
+TARGET_CONTAINER=$2
+
+docker checkpoint create $TARGET_CONTAINER $SERVICE
+echo "Checkpointed service: $SERVICE"

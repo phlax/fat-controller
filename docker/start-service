@@ -23,6 +23,7 @@ function check_socket_status () {
     fi
 }
 
+
 if [[ $SOCKET == /* ]]; then
     DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
     DC="/usr/local/bin/docker-compose -p $APP -f $DC_FILE --skip-hostname-check --no-ansi"
@@ -31,19 +32,18 @@ if [[ $SOCKET == /* ]]; then
     export COMPOSE_IGNORE_ORPHANS=true
     export DOCKER_HOST=unix:///fat/docker.sock
     TARGET_CONTAINER="${APP}_${SERVICE}_1"
-    echo "Checking for saved containers for...: $TARGET_CONTAINER"
-    if [ ! -z "$USE_CRIU" ]; then
-        SAVED=$(docker checkpoint ls $TARGET_CONTAINER | tail -n+2)
-    fi
 
-    if [ ! -z "$SAVED" ]; then
-        echo "Restoring from checkpoint"
-        docker start --checkpoint=$SERVICE $TARGET_CONTAINER  && docker checkpoint rm $TARGET_CONTAINER $SERVICE
-        exit 0
+    function start_container () {
+        check_socket_status
+        echo "Using $cores cores to initiate container"
+        printf '%s\n' "${SERVICES[@]}" | xargs --max-procs=$cores  \
+                                               --replace \
+                                               /bin/sh -c "echo starting {} && $DC up -d --no-build --no-recreate {}"
+    }
+    if [ ! -z "$USE_CRIU" ]; then
+        /usr/local/bin/restore-from-checkpoint $SERVICE $TARGET_CONTAINER || start_container
+    else
+        start_container
     fi
-    check_socket_status
-    echo "Using $cores cores to initiate container"
-    printf '%s\n' "${SERVICES[@]}" | xargs --max-procs=$cores  \
-          --replace \
-          /bin/sh -c "echo starting {} && $DC up -d --no-build --no-recreate {}"
+    touch $DC_FILE;
 fi

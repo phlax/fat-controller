@@ -14,6 +14,10 @@ DAEMONCOUNT=$(echo $DAEMONS | wc -w)
 RUNNING=$(docker ps -q --filter "name=apps_" | wc -l)
 APP=apps
 
+if [ ! -f "$DC_FILE" ]; then
+    echo "No daemon compose file found, not stopping any daemons"
+fi
+
 if [ $RUNNING -gt $DAEMONCOUNT ]; then
     echo "Waiting for other procs to die..."
     while [ $(docker ps -q --filter "name=apps_" | wc -l) -gt $DAEMONCOUNT ] && [ $(date +%s) -lt $END ]; do

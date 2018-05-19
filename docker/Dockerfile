@@ -19,6 +19,9 @@ COPY daemon-controller.service /etc/systemd/system/daemon-controller.service
 COPY configuration.service /etc/systemd/system/configuration.service
 COPY install-docker.sh /tmp/install-docker.sh
 COPY docker-compose /usr/local/bin/docker-compose
+COPY idle.timer /etc/systemd/system/idle.timer
+COPY idle.service /etc/systemd/system/idle.service
+
 
 RUN /tmp/install-docker.sh
 
@@ -66,6 +69,11 @@ COPY wait-for-service /usr/local/bin/wait-for-service
 COPY stop-service /usr/local/bin/stop-service
 
 COPY start-proxy /usr/local/bin/start-proxy
+COPY stop-idle-services /usr/local/bin/stop-idle-services
+
+COPY restore-from-checkpoint /usr/local/bin/restore-from-checkpoint
+COPY checkpoint-service /usr/local/bin/checkpoint-service
+
 
 STOPSIGNAL 37
 VOLUME [ "/sys/fs/cgroup" ]

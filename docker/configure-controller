@@ -109,6 +109,8 @@ class Controller(object):
         upstream_config.optionxform = str
         upstream_config.add_section('Unit')
         upstream_config.set('Unit', 'Description', description)
+        upstream_config.set('Unit', 'Requires', 'idle.timer')
+        upstream_config.set('Unit', 'After', 'idle.timer')
         upstream_config.add_section('Service')
         upstream_config.set('Service', 'ExecStart', '%s/usr/local/bin/start-service %s %s %s %s %s' % (env, app, name, socket, service, " ".join(services)))
         upstream_config.set('Service', 'ExecStartPost', "%s/usr/local/bin/wait-for-service %s %s %s %s" % (env, app, name, socket, service))
@@ -146,11 +148,26 @@ class Controller(object):
             open(os.path.join(PATH_CONTROLLER_VAR, 'docker-compose.yml'), 'wb'),
             default_flow_style=False)
 
+    def append_touch_files(self, name):
+        if not os.path.exists(PATH_CONTROLLER_VAR):
+            os.makedirs(PATH_CONTROLLER_VAR)
+        idle_files = self.config.get("service:%s" % name, 'idle-files').split('\n')
+        with open(os.path.join(PATH_CONTROLLER_VAR, 'idle-files'), 'a') as f:
+            f.write('%s %s' % (name, ' '.join(idle_files)))
+
+    def set_timeout_file(self):
+        if not os.path.exists(PATH_CONTROLLER_VAR):
+            os.makedirs(PATH_CONTROLLER_VAR)
+        with open(os.path.join(PATH_CONTROLLER_VAR, 'idle-timeout'), 'w') as f:
+            f.write(self.config.get('controller', 'idle-timeout'))
+
     def update_systemd(self):
         self.generate_daemon_compose_file()
+        self.set_timeout_file()
         for name in self.services:
             self.generate_service_files(name)
             self.generate_compose_file(name)
+            self.append_touch_files(name)
 
     @property
     def services(self):
