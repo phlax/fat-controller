@@ -1,0 +1,10 @@
+#!/bin/bash
+
+ACTION=$1
+SERVICE=$2
+
+echo "Service container $ACTION: $SERVICE"
+
+DC_FILE=/var/lib/controller/docker-compose.yml
+
+docker-compose -p apps -f $DC_FILE run --rm zmq-publisher stopped $SERVICE

@@ -23,6 +23,7 @@ if [[ $SOCKET == /* ]]; then
                 sleep .5
             done
         fi
+        notify-service-change stopped $SERVICE
     }
     if [ ! -z "$USE_CRIU" ]; then
         /usr/local/bin/checkpoint-service $SERVICE $TARGET_CONTAINER || stop_container
