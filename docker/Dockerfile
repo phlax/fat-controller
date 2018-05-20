@@ -18,26 +18,15 @@ COPY controller.service /etc/systemd/system/controller.service
 COPY daemon-controller.service /etc/systemd/system/daemon-controller.service
 COPY configuration.service /etc/systemd/system/configuration.service
 COPY install-docker.sh /tmp/install-docker.sh
+COPY install-ctrl.sh /tmp/install-ctrl.sh
 COPY docker-compose /usr/local/bin/docker-compose
 COPY idle.timer /etc/systemd/system/idle.timer
 COPY idle.service /etc/systemd/system/idle.service
 
-
 RUN /tmp/install-docker.sh
 
-RUN echo 'deb http://deb.debian.org/debian stretch-backports main' >> /etc/apt/sources.list
-RUN apt-get update -qq \
-    && apt-get install \
-        -y \
-        -qq \
-        --no-install-recommends \
-	-t stretch-backports \
-        python-minimal \
-        python-setuptools \
-        systemd \
-        virtualenv \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && apt-get clean
+COPY install-ctrl.sh /tmp/install-ctrl.sh
+RUN /tmp/install-ctrl.sh && echo yay
 
 RUN cd /lib/systemd/system/sysinit.target.wants/; ls | grep -v systemd-tmpfiles-setup | xargs rm -f $1 \
     rm -rf /lib/systemd/system/multi-user.target.wants/*;\
@@ -51,10 +40,6 @@ RUN cd /lib/systemd/system/sysinit.target.wants/; ls | grep -v systemd-tmpfiles-
     rm -rf /lib/systemd/system/systemd-update-utmp*;
 RUN systemctl set-default multi-user.target
 RUN systemctl enable controller
-
-USER controller
-RUN cd /controller && virtualenv . && . bin/activate && pip install docker-compose pyyaml
-USER root
 
 COPY configure-controller /usr/local/bin/configure-controller
 
@@ -74,7 +59,7 @@ COPY controller-entry.sh /usr/local/bin/controller-entry.sh
 
 COPY restore-from-checkpoint /usr/local/bin/restore-from-checkpoint
 COPY checkpoint-service /usr/local/bin/checkpoint-service
-
+COPY notify-service-change /usr/local/bin/notify-service-change
 
 STOPSIGNAL 37
 VOLUME [ "/sys/fs/cgroup" ]

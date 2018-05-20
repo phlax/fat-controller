@@ -16,7 +16,21 @@ add-apt-repository \
    $(lsb_release -cs) \
    stable"
 apt-get update
-apt-get install -qq --no-install-recommends docker-ce
+apt-get install -qq -y --allow-downgrades docker-ce=17.09.1~ce-0~debian
+
+echo 'deb http://deb.debian.org/debian stretch-backports main' >> /etc/apt/sources.list
+apt-get update -qq \
+    && apt-get install \
+        -y \
+        -qq \
+        --no-install-recommends \
+	-t stretch-backports \
+        python-minimal \
+        python-setuptools \
+        systemd \
+        virtualenv \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && apt-get clean
 
 useradd \
     -m \
@@ -27,5 +41,5 @@ useradd \
   $APP_USERNAME
 
 echo "creating app dir: $APP_DIR"
-mkdir -p "$APP_DIR"
+mkdir -p "$APP_DIR/src"
 chown -R $APP_USERNAME:$APP_USERNAME "$APP_DIR"

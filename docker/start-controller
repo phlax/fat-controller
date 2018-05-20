@@ -1,33 +1,3 @@
-#!/controller/bin/python
+#!/bin/bash
 
-import commands
-import os
-from ConfigParser import ConfigParser
-
-import yaml
-
-DEFAULTS = dict(description='', services='', socket='', compose='', service='', name='')
-CFG_CONTROLLER = '/etc/controller.conf'
-PATH_CONTROLLER_VAR = '/var/lib/controller'
-
-
-class Controller(object):
-
-    def __init__(self):
-        self.config = ConfigParser(DEFAULTS)
-        self.config.read(CFG_CONTROLLER)
-        self.docker_config = yaml.load(commands.getoutput('docker-compose config'))
-
-    @property
-    def services(self):
-        for section in [s for s in self.config.sections() if s.startswith('service:')]:
-            yield section[8:]
-
-    def start_systemd(self):
-        print(commands.getoutput('systemctl daemon-reload'))
-        for name in self.services:
-            print 'Starting socket for: %s' % name
-            print commands.getoutput('systemctl start controller-%s--proxy.socket' % name)
-            print 'Done, listening, 8)'
-
-Controller().start_systemd()
+/controller/bin/ctrl compose up
