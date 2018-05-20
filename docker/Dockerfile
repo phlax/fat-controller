@@ -26,7 +26,7 @@ COPY idle.service /etc/systemd/system/idle.service
 RUN /tmp/install-docker.sh
 
 COPY install-ctrl.sh /tmp/install-ctrl.sh
-RUN /tmp/install-ctrl.sh && echo yay
+RUN /tmp/install-ctrl.sh
 
 RUN cd /lib/systemd/system/sysinit.target.wants/; ls | grep -v systemd-tmpfiles-setup | xargs rm -f $1 \
     rm -rf /lib/systemd/system/multi-user.target.wants/*;\
