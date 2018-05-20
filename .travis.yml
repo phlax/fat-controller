@@ -33,9 +33,9 @@ script:
   # up...
   - docker-compose up -d fat-controller
 
-  - docker-compose exec fat-controller journalctl -u controller
-  - docker-compose exec fat-controller journalctl -u configuration
-  - docker-compose exec fat-controller journalctl -u daemon-controller
+  - docker-compose exec fat-controller journalctl -l --no-pager -u controller
+  - docker-compose exec fat-controller journalctl -l --no-pager -u configuration
+  - docker-compose exec fat-controller journalctl -l --no-pager -u daemon-controller
 
   # nginx is not active
   - docker-compose exec fat-controller docker-compose ps
