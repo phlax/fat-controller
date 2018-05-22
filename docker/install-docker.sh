@@ -8,15 +8,20 @@ apt-get install -qq \
      apt-transport-https \
      ca-certificates \
      curl \
+     git \
      gnupg2 \
      software-properties-common
+apt-get dist-upgrade -yy -q
 curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
 add-apt-repository \
    "deb [arch=amd64] https://download.docker.com/linux/debian \
    $(lsb_release -cs) \
    stable"
 apt-get update
-apt-get install -qq -y --allow-downgrades docker-ce=17.09.1~ce-0~debian
+apt-get install -qq -y \
+        --no-install-recommends \
+        --allow-downgrades \
+        docker-ce=17.09.1~ce-0~debian
 
 echo 'deb http://deb.debian.org/debian stretch-backports main' >> /etc/apt/sources.list
 apt-get update -qq \
