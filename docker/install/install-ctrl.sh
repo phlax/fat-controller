@@ -26,3 +26,5 @@ su - controller bash -c "\
     && git clone https://github.com/phlax/ctrl.compose \
     && cd ctrl.compose \
     && pip install -e . "
+
+rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

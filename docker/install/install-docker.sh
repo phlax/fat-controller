@@ -34,7 +34,6 @@ apt-get update -qq \
         python-setuptools \
         systemd \
         virtualenv \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && apt-get clean
 
 useradd \
