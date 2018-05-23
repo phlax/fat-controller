@@ -20,4 +20,6 @@ else
         sleep 0.1;
     done
 fi
-echo "Service ($SERVICE) is up on $SOCKET!"
+
+# required for zmq publishing
+echo "STARTED"

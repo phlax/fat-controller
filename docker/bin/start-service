@@ -8,6 +8,9 @@ SOCKET=$3
 SERVICE=$4
 SERVICES=(${@:5})
 
+# required for zmq publishing
+echo "STARTING"
+
 
 function check_socket_status () {
     echo "Checking status for $SERVICE"

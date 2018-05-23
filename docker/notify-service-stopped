@@ -1,5 +1,0 @@
-#!/bin/bash
-
-SERVICE=$1
-
-echo "Service container stopped: $SERVICE"

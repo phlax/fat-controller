@@ -7,6 +7,11 @@ NAME=$2
 SOCKET=$3
 SERVICE=$4
 
+
+# required for zmq publishing
+echo "STOPPING"
+
+
 if [[ $SOCKET == /* ]]; then
     DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
     export DOCKER_HOST=unix:///fat/docker.sock
@@ -23,7 +28,8 @@ if [[ $SOCKET == /* ]]; then
                 sleep .5
             done
         fi
-        notify-service-change stopped $SERVICE
+        # required for zmq publishing
+        echo "STOPPED"
     }
     if [ ! -z "$USE_CRIU" ]; then
         /usr/local/bin/checkpoint-service $SERVICE $TARGET_CONTAINER || stop_container

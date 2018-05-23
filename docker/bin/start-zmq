@@ -1,11 +1,53 @@
-#!/bin/bash
+#!/controller/bin/python -u
 
-set -e
+import asyncio
+import functools
+import os
+import signal
+import sys
 
-APP=$1
-NAME=$2
-SOCKET=$3
-SERVICE=$4
-SERVICES=(${@:5})
+from zope.dottedname.resolve import resolve
 
-echo "Starting ZMQ RPC listener"
+
+class Runner(object):
+
+    @property
+    def apps(self):
+        return [
+            (v.split(' ')[0], v.split(' ')[1:])
+            for k, v
+            in os.environ.items()
+            if k.startswith('ZMQ_APP')]
+
+    def run(self, project, command, socket, subscription, subscriptions=None):
+        getattr(self, 'run_%s' % command)(socket, subscription, subscriptions=None)
+
+    def run_publish(self, socket, subscription, subscriptions=None):
+        print('Publishing to %s' % socket)
+        loop = asyncio.get_event_loop()
+        for signame in ('SIGINT', 'SIGTERM'):
+            loop.add_signal_handler(
+                getattr(signal, signame),
+                functools.partial(self.stop, loop, signame))
+        print("Event loop started.")
+        app = 'ctrl.systemd.pubsub.SystemdZMQPublisher'
+        print('loading app: %s' % app)
+        handler = resolve(app)(loop, socket)
+        response = loop.run_until_complete(handler.run(subscription, subscriptions))
+        if response is not None:
+            print(response)
+        try:
+            loop.run_forever()
+        finally:
+            loop.close()
+
+    def stop(self, loop, signame):
+        print("got signal %s: exit, goodbye..." % signame)
+        loop.stop()
+
+
+def main():
+    Runner().run(*sys.argv[1:])
+
+if __name__ == '__main__':
+    main()
