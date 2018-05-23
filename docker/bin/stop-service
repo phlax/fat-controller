@@ -16,7 +16,7 @@ if [[ $SOCKET == /* ]]; then
     DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
     export DOCKER_HOST=unix:///fat/docker.sock
     TARGET_CONTAINER="${APP}_${SERVICE}_1"
-    echo "CRIU is set to $USE_CRIU"
+    # echo "CRIU is set to $USE_CRIU"
 
     function stop_container () {
         echo "Stopping service container for $SERVICE..."
@@ -28,8 +28,6 @@ if [[ $SOCKET == /* ]]; then
                 sleep .5
             done
         fi
-        # required for zmq publishing
-        echo "STOPPED"
     }
     if [ ! -z "$USE_CRIU" ]; then
         /usr/local/bin/checkpoint-service $SERVICE $TARGET_CONTAINER || stop_container
@@ -37,3 +35,6 @@ if [[ $SOCKET == /* ]]; then
         stop_container
     fi
 fi
+
+# required for zmq publishing
+echo "STOPPED"

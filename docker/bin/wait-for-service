@@ -7,7 +7,7 @@ SERVICE="$4"
 
 
 if [[ $SOCKET == /* ]]; then
-    echo "Checking service $SERVICE on $SOCKET"
+    # echo "Checking service $SERVICE on $SOCKET"
     DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
     export DOCKER_HOST=unix:///fat/docker.sock
     TARGET_CONTAINER="${APP}_${SERVICE}_1"

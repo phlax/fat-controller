@@ -7,12 +7,10 @@ for SERVICE in "${ACTIVE[@]}"; do
     SERVICE=$(echo $SERVICE | awk '{$1=$1};1' | cut -d' ' -f1)
     SERVICE=$(echo $SERVICE | grep -E "^controller-.*.service$") || continue
     SERVICE=$(echo $SERVICE | grep -vE '\-\-proxy.service$') || continue
-    echo "adding $SERVICE to RUNNING"
     RUNNING+=($SERVICE)
 done
 
 if [ ${#RUNNING[@]} -eq 0 ]; then
-    echo "No active services to expire"
     exit 0;
 fi
 
@@ -21,10 +19,8 @@ EXPIRY=$(date --date "$TIMEOUT seconds ago" +%s)
 
 for SERVICE in $RUNNING; do
     SERVICE=${SERVICE:11:-8}
-    echo "Check expiry for $SERVICE (expiry time is $EXPIRY)"
     DC_FILE=/var/lib/controller/$SERVICE/docker-compose.yml
     TSTAMP=$(stat -c %Y "$DC_FILE");
-    echo "Comparing for compose file $TSTAMP <> $EXPIRY"
     if [ $TSTAMP -gt $EXPIRY ]; then
         break;
     fi
