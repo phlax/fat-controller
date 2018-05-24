@@ -33,9 +33,13 @@ services:
     restart: 'no'
     image: phlax/zmq
     environment:
-    - ZMQ_APP_0=ctrl.zmq.pubsub.ZMQSubscriber ipc:///app/sockets/zmq-subscriber.socket ctrl
+    - ZMQ_APP_subscriber=ctrl.zmq.pubsub.ZMQSubscriber ipc:///app/sockets/zmq-subscriber.socket ctrl
+    - ZMQ_APP_rpc=ctrl.zmq.rpc.ZMQRPCClient ipc:///app/sockets/zmq-rpc.socket
+    - ZMQ_APP_cli=ctrl.zmq.rpc.ZMQRPCServer ipc:///sockets/zmq-cli.socket
+    - ZMQ_ROUTER=myrouter.ConfiguredRouter
     volumes:
     - ctrl-sockets:/app/sockets
+    - ./myrouter.py:/app/src/myrouter.py
 
 volumes:
   logs:
