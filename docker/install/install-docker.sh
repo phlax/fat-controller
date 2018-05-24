@@ -5,6 +5,7 @@ set -e
 apt-get update
 apt-get install -y -qq \
 	--no-install-recommends \
+	--no-install-suggests \
      apt-transport-https \
      ca-certificates \
      curl \
@@ -20,6 +21,7 @@ add-apt-repository \
 apt-get update
 apt-get install -qq -y \
         --no-install-recommends \
+	--no-install-suggests \
         --allow-downgrades \
         docker-ce=17.09.1~ce-0~debian
 
