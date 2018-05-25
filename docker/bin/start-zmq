@@ -9,9 +9,8 @@ import sys
 from zope import component, interface
 from zope.dottedname.resolve import resolve
 
-from ctrl.config.interfaces import ICtrlConfig
-from ctrl.core.interfaces import ICtrlApp
-from ctrl.systemd.interfaces import ISysctl
+from ctrl.core.interfaces import (
+    ICtrlApp, ICtrlConfig, ISystemctl)
 from ctrl.zmq.interfaces import IZMQRPCReply, IZMQRPCServer
 
 
@@ -34,7 +33,7 @@ class FatControllerRPCReply(object):
     async def handle_stop(self, service):
         # MOVE THIS!
         await self.setup()
-        await component.getUtility(ISysctl).stop(service)
+        await component.getUtility(ISystemctl).stop(service)
         return 'RPC STOP RECV: %s, thanks' % service
 
     async def reply(self, message):
