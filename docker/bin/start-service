@@ -26,9 +26,10 @@ function check_socket_status () {
     fi
 }
 
+DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
+touch $DC_FILE;
 
 if [[ $SOCKET == /* ]]; then
-    DC_FILE=/var/lib/controller/$NAME/docker-compose.yml
     DC="/usr/local/bin/docker-compose -p $APP -f $DC_FILE --skip-hostname-check --no-ansi"
     echo "Spawning services: ${SERVICES[@]}"
     cores=$(fgrep -c processor /proc/cpuinfo)
@@ -48,5 +49,4 @@ if [[ $SOCKET == /* ]]; then
     else
         start_container
     fi
-    touch $DC_FILE;
 fi
