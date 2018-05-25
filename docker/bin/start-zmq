@@ -6,7 +6,25 @@ import os
 import signal
 import sys
 
+from zope import component, interface
 from zope.dottedname.resolve import resolve
+
+from ctrl.zmq.interfaces import IZMQRPCReply, IZMQRPCServer
+
+
+@interface.implementer(IZMQRPCReply)
+class FatControllerRPCReply(object):
+
+    def __init__(self, context):
+        self.context = context
+
+    async def handle_stop(self, service):
+        print("Stopping %s" % service)
+        return 'RPC STOP RECV: %s, thanks' % service
+
+    async def reply(self, message):
+        message = ' '.join([m.decode('utf-8') for m in message])
+        return await getattr(self, 'handle_%s' % message.split(' ')[0])(message.split(' ')[1])
 
 
 class Runner(object):
@@ -19,8 +37,9 @@ class Runner(object):
             in os.environ.items()
             if k.startswith('ZMQ_APP')]
 
-    def run(self, project, command, socket, subscription, subscriptions=None):
-        getattr(self, 'run_%s' % command)(socket, subscription, subscriptions=None)
+    def run(self, project, command, socket, *args, **kwargs):
+        getattr(self, 'run_%s' % command)(
+            socket, *args, **kwargs)
 
     def run_publish(self, socket, subscription, subscriptions=None):
         print('Publishing to %s' % socket)
@@ -33,7 +52,8 @@ class Runner(object):
         app = 'ctrl.systemd.pubsub.SystemdZMQPublisher'
         print('loading app: %s' % app)
         handler = resolve(app)(loop, socket)
-        response = loop.run_until_complete(handler.run(subscription, subscriptions))
+        response = loop.run_until_complete(
+            handler.run(subscription, subscriptions))
         if response is not None:
             print(response)
         try:
@@ -41,7 +61,9 @@ class Runner(object):
         finally:
             loop.close()
 
-    def run_rpc(self, socket):
+    def run_rpc(self, socket, *args, **kwargs):
+        if socket.startswith('/'):
+            socket = 'ipc://%s' % socket
         print('Listening on %s' % socket)
         loop = asyncio.get_event_loop()
         for signame in ('SIGINT', 'SIGTERM'):
@@ -49,9 +71,14 @@ class Runner(object):
                 getattr(signal, signame),
                 functools.partial(self.stop, loop, signame))
         print("Event loop started.")
-        app = 'ctrl.systemd.rpc.SystemdZMQListener'
+        app = 'ctrl.zmq.rpc.ZMQRPCServer'
         print('loading app: %s' % app)
-        handler = resolve(app)(loop, socket)
+        component.provideAdapter(
+            adapts=(IZMQRPCServer, ),
+            provides=IZMQRPCReply,
+            factory=FatControllerRPCReply,
+            name='fc-rpc')
+        handler = resolve(app)('fc-rpc', socket, loop)
         response = loop.run_until_complete(handler.run())
         if response is not None:
             print(response)
@@ -67,6 +94,7 @@ class Runner(object):
 
 def main():
     Runner().run(*sys.argv[1:])
+
 
 if __name__ == '__main__':
     main()
