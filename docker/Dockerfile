@@ -13,7 +13,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
     container=docker \
     APP_DIR=/controller \
     APP_USER_ID=1000 \
-    APP_USERNAME=controller
+    APP_USERNAME=controller \
+    CTRL_MODULES=ctrl.zmq,ctrl.systemd \
+    PYTHONPATH=/controller/src
 
 COPY systemd /etc/systemd/system
 COPY ./install /tmp/install

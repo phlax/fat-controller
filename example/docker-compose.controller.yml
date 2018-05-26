@@ -26,8 +26,6 @@ services:
       # this assumes you are running in folder above this file
       COMPOSE_CONTEXT: ${PWD}/example
       USE_CRIU: 'true'
-      LISTEN_ZMQ: 'true'
-      PUBLISH_ZMQ: 'true'
 
   zmq:
     restart: 'no'

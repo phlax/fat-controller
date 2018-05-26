@@ -1,3 +1,5 @@
 #!/bin/bash
 
+export CTRL_MODULES=ctrl.systemd,ctrl.zmq,ctrl.compose
+
 /controller/bin/ctrl config update_env

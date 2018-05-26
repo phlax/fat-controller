@@ -1,118 +1,18 @@
-#!/controller/bin/python -u
+#!/bin/sh
 
-import asyncio
-import functools
-import os
-import signal
-import sys
+COMMAND=$2
+SOCKET=$3
 
-from zope import component, interface
-from zope.dottedname.resolve import resolve
+if [ $COMMAND = 'publish' ]; then
+    echo "Starting publisher on $SOCKET"
+    export ZMQ_ROUTER=publish_router.PublishRouter
+    export ZMQ_APP_publish="ctrl.zmq.pubsub.ZMQPublisher $SOCKET"
+    /controller/bin/ctrl zmq up
+fi
 
-from ctrl.core.interfaces import (
-    ICtrlApp, ICtrlConfig, ISystemctl)
-from ctrl.zmq.interfaces import IZMQRPCReply, IZMQRPCServer
-
-
-@interface.implementer(IZMQRPCReply)
-class FatControllerRPCReply(object):
-
-    def __init__(self, context):
-        self.context = context
-
-    async def setup(self):
-        app = component.getUtility(ICtrlApp)
-        await app.setup(['ctrl.config'])
-        config = component.getUtility(ICtrlConfig)
-        apps = (
-            config.config.get('controller', 'apps').split('\n')
-            if config.config.has_section('controller')
-            else [])
-        await app.setup(apps)
-
-    async def handle_stop(self, service):
-        # MOVE THIS!
-        await self.setup()
-        await component.getUtility(ISystemctl).stop(
-            "controller-%s.service" % service)
-        return 'RPC STOP RECV: %s, thanks' % service
-
-    async def reply(self, message):
-        message = ' '.join([m.decode('utf-8') for m in message])
-        return await getattr(
-            self,
-            ('handle_%s'
-             % message.split(' ')[0])(message.split(' ')[1]))
-
-
-class Runner(object):
-
-    @property
-    def apps(self):
-        return [
-            (v.split(' ')[0], v.split(' ')[1:])
-            for k, v
-            in os.environ.items()
-            if k.startswith('ZMQ_APP')]
-
-    def run(self, project, command, socket, *args, **kwargs):
-        getattr(self, 'run_%s' % command)(
-            socket, *args, **kwargs)
-
-    def run_publish(self, socket, subscription, subscriptions=None):
-        print('Publishing to %s' % socket)
-        loop = asyncio.get_event_loop()
-        for signame in ('SIGINT', 'SIGTERM'):
-            loop.add_signal_handler(
-                getattr(signal, signame),
-                functools.partial(self.stop, loop, signame))
-        print("Event loop started.")
-        app = 'ctrl.systemd.pubsub.SystemdZMQPublisher'
-        print('loading app: %s' % app)
-        handler = resolve(app)(loop, socket)
-        response = loop.run_until_complete(
-            handler.run(subscription, subscriptions))
-        if response is not None:
-            print(response)
-        try:
-            loop.run_forever()
-        finally:
-            loop.close()
-
-    def run_rpc(self, socket, *args, **kwargs):
-        if socket.startswith('/'):
-            socket = 'ipc://%s' % socket
-        print('Listening on %s' % socket)
-        loop = asyncio.get_event_loop()
-        for signame in ('SIGINT', 'SIGTERM'):
-            loop.add_signal_handler(
-                getattr(signal, signame),
-                functools.partial(self.stop, loop, signame))
-        print("Event loop started.")
-        app = 'ctrl.zmq.rpc.ZMQRPCServer'
-        print('loading app: %s' % app)
-        component.provideAdapter(
-            adapts=(IZMQRPCServer, ),
-            provides=IZMQRPCReply,
-            factory=FatControllerRPCReply,
-            name='fc-rpc')
-        handler = resolve(app)('fc-rpc', socket, loop)
-        response = loop.run_until_complete(handler.run())
-        if response is not None:
-            print(response)
-        try:
-            loop.run_forever()
-        finally:
-            loop.close()
-
-    def stop(self, loop, signame):
-        print("got signal %s: exit, goodbye..." % signame)
-        loop.stop()
-
-
-def main():
-    Runner().run(*sys.argv[1:])
-
-
-if __name__ == '__main__':
-    main()
+if [ $COMMAND = 'rpc' ]; then
+    echo "Starting listener on $SOCKET"
+    export ZMQ_ROUTER=rpc_router.RPCRouter
+    export ZMQ_APP_rpc="ctrl.zmq.rpc.ZMQRPCServer ipc://$SOCKET"
+    /controller/bin/ctrl zmq up
+fi

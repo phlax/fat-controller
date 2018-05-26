@@ -23,4 +23,6 @@ su - controller bash -c "\
     && cd ctrl.compose \
     && pip install -e . "
 
+cp -a /tmp/install/src/* /controller/src
+
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
