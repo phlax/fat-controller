@@ -19,6 +19,10 @@ su - controller bash -c "\
     && cd ctrl.zmq \
     && pip install -e . \
     && cd .. \
+    && git clone https://github.com/phlax/ctrl.vpn \
+    && cd ctrl.vpn \
+    && pip install -e . \
+    && cd .. \
     && git clone https://github.com/phlax/ctrl.compose \
     && cd ctrl.compose \
     && pip install -e . "
