@@ -1,7 +1,0 @@
-[Unit]
-Description=Idle controller service
-
-[Service]
-ExecStart=/usr/local/bin/stop-idle-services
-PrivateTmp=true
-RemainAfterExit=false

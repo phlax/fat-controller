@@ -1,8 +1,0 @@
-#!/bin/bash
-
-set -e
-
-SOCKET=$1
-
-echo "Starting systemd-socket-proxyd for $SOCKET"
-exec /lib/systemd/systemd-socket-proxyd $SOCKET
