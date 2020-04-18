@@ -1,100 +1,55 @@
-# https://travis-ci.org/#!/phlax/fat-controller
-dist: trusty
-sudo: true
+# https://travis-ci.org/#!/phlax/fatc
+
+dist: bionic
 language: python
-services:
-  - docker
+env:
+  global:
+    - PYTHONUNBUFFERED=1
 
 before_install:
-  - "echo '{\"storage-driver\": \"overlay2\", \"experimental\": true}' | sudo tee /etc/docker/daemon.json"
-  - "sudo apt-get install -qq -y --allow-downgrades docker-ce=17.09.1~ce-0~ubuntu"
+  - # echo '{"experimental":true,"storage-driver":"devicemapper"}' | sudo tee /etc/docker/daemon.json
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - >
+    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+    && sudo apt update
+    && sudo apt -y -o Dpkg::Options::="--force-confnew" install docker-ce criu
 
 install:
-  - sudo apt-get install -qq -y libprotobuf-c0 libprotobuf-lite8 libnet1 libnl-3-200 iptables
-  - pip install -U docker-compose
-  - CRIU_CONTAINER=$(docker run -d --rm phlax/debian-criu:ubuntu-trusty)
-  - sudo docker cp $CRIU_CONTAINER:/usr/local/bin/criu /usr/local/bin/criu
-  - docker kill $CRIU_CONTAINER
-  - cd /home/travis/build/phlax/fat-controller
+  - make image
+  - make pysh
+  - make cli
 
 script:
+  - . test.env
 
-  - docker version
+  # this points to an http server in a docker container, but allows realtime updating of where
+  # fat controller sends :backend: traffic to allow scaling and movable workloads
+  - sudo mkdir -p /var/lib/controller
+  - echo external-http > example/backend
+  - pysh ./tests/system.sh
+  - pysh ./tests/daemons.sh
+  # give services a fair chance to fail...
+  - >
+    docker container prune -f
+    && docker image prune -f
+    && docker volume prune -f
+    && docker network prune -f
+  - pysh ./tests/services.sh
+  - pysh ./tests/checkpoint.sh
+  - pysh ./tests/idle.sh
+  - pysh ./tests/reconfigure.sh
 
-  # build the fat controller
-  - docker-compose build fat-controller
-
-  # set the environment
-  - echo "COMPOSE_FILE=./example/docker-compose.controller.yml" > ./.env
-  - echo "COMPOSE_IGNORE_ORPHANS='true'" >> ./.env
-  - envsubst < example/controller.conf.in > example/controller.conf
-  - cat example/controller.conf
-
-  # up...
-  - docker-compose up -d
-
-  - docker-compose exec fat-controller journalctl -l --no-pager -u controller
-  - docker-compose exec fat-controller journalctl -l --no-pager -u configuration
-  - docker-compose exec fat-controller journalctl -l --no-pager -u daemon-controller
-
-  - docker-compose exec fat-controller ls /etc/systemd/system
-
-  # nginx is not active
-  - docker-compose exec fat-controller docker-compose ps
-  - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
-
-  # fetch a page
-  - curl -m 5 http://localhost:8080
-
-  # nginx is active now
-  - docker-compose exec fat-controller docker-compose ps
-  #  - docker-compose exec fat-controller systemctl status -l --no-pager controller-nginx
-  - docker-compose exec fat-controller journalctl --all -l --no-pager -u controller-nginx
-  - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
-
-  # stop nginx, checkpoint was created
-  - docker-compose exec fat-controller systemctl stop controller-nginx
-  - docker-compose exec fat-controller docker-compose ps
-  - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
-  - docker checkpoint ls example_nginx_1
-
-  # request a page again
-  - curl -m 5 http://localhost:8080
-
-  # nginx is back - checkpoint was destroyed
-  - docker-compose exec fat-controller docker-compose ps
-  - docker-compose exec fat-controller systemctl status -l --no-pager controller-nginx
-  - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
-  - docker checkpoint ls example_nginx_1
-
-  # wait for 15 seconds and nginx should have gone away
-  - sleep 15
-
-  - docker-compose exec fat-controller docker-compose ps
-  - docker-compose exec fat-controller journalctl -l --no-pager -u idle.timer
-  - docker-compose exec fat-controller journalctl -l --no-pager -u idle.service
-  - docker-compose exec fat-controller journalctl -l --no-pager -u controller-nginx
-  - docker-compose exec fat-controller systemctl show controller-nginx -p ActiveState
-  - docker checkpoint ls example_nginx_1
-
-  # request a page again, and its back
-  - curl -m 5 http://localhost:8080
-  - sleep 1
-
-  - docker checkpoint ls example_nginx_1
-
-  # check the subscription server for emitted events
-  - docker-compose exec fat-controller systemctl status -l --no-pager zmq-publish
-  - docker-compose logs zmq
+  - shellcheck -x usr/lib/fatc/*
+  - shellcheck -x usr/bin/*
 
 
-  - docker-compose stop fat-controller
-  - docker ps -a
-  - docker logs example_nginx_1
+before_deploy:
+  - echo $DOCKER_PASSWORD | docker login -u phlax --password-stdin
 
-
-after_success:
-
-  - docker-compose build fat-controller
-  - docker login -u phlax -p "$DOCKER_PASSWORD"
-  - docker push phlax/fat-controller
+deploy:
+  provider: script
+  script: make hub-image
+  skip_cleanup: true
+  on:
+    all_branches: true
+    condition: $TRAVIS_BRANCH =~ ^(master)$
