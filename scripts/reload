@@ -1,0 +1,16 @@
+#!/bin/bash
+
+LOAD=${LOAD:-"load_services"}
+
+
+load_services () {
+    curl -m5 --unix-socket ./example/sockets/fc/service0.0.sock http://localhost | grep Hello | grep backend | grep unix
+    curl -m5 --unix-socket ./example/sockets/fc/service1.0.sock http://localhost | grep Hello | grep backend | grep network
+    docker-compose exec fatc journalctl -f
+}
+
+
+make image
+docker-compose down && docker container prune -f && docker-compose up -d
+echo "Running $LOAD"
+$LOAD
