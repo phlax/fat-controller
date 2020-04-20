@@ -1,0 +1,31 @@
+# docker-compose example for Fat controller services stack: tcp -> tcp
+#
+# This service listens on a backend network socket.
+#
+# Fat controller creates a frontend network socket for it and proxies to the backend
+# network socket
+#
+# redis is added, to show how the service can network with other containers in its
+# own stack
+
+version: "2.4"
+services:
+
+  # the name of this service must be unique to the fat-controller network
+  http:
+    image: nginx
+    depends_on:
+      - redis
+    volumes:
+      - /var/lib/controller/services/service3/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - /var/lib/controller/services/service3/index.html:/usr/share/nginx/html/index.html:ro
+    networks:
+      fatc:
+
+  redis:
+    image: redis
+
+networks:
+  fatc:
+    external:
+      name: fatc

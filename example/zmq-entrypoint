@@ -1,3 +1,0 @@
-#!/controller/bin/python
-
-print ('entrypoint!')

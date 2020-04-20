@@ -1,0 +1,11 @@
+{
+    "tracks": [
+	{"listen": ":unix:",
+	 "upstream": ":unix:",
+	 "healthy": "curl --output /dev/null --silent --head --fail --unix-socket $UPSTREAM http://localhost/"}
+    ],
+    "idle": {
+	"timeout": 200,
+	"test": "test-timeout"
+    }
+}
