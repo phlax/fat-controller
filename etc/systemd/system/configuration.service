@@ -1,0 +1,21 @@
+[Unit]
+Description=Controller configuration service
+Requires=docker.service
+After=docker.service
+
+[Service]
+ExecStart=/usr/bin/fatctl configure
+PrivateTmp=true
+RemainAfterExit=true
+PassEnvironment=SYSTEMD_DIR
+PassEnvironment=CONTROLLER_COMPOSE
+PassEnvironment=CONTROLLER_SOCKETS_DIR
+PassEnvironment=SOCKET_TIMEOUT
+PassEnvironment=DAEMONS_DIR
+PassEnvironment=DAEMONS_SOCKET_DIR
+PassEnvironment=SERVICES_DIR
+PassEnvironment=SERVICES_SOCKET_DIR
+PassEnvironment=SERVICES_IDLE
+
+[Install]
+WantedBy=multi-user.target

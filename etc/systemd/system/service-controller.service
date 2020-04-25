@@ -1,0 +1,11 @@
+[Unit]
+Description=Controller services
+
+[Service]
+ExecStart=/usr/local/bin/start-services
+ExecStop=/usr/local/bin/stop-services
+PrivateTmp=true
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=Idle controller service
+
+[Service]
+ExecStart=/usr/bin/fatctl stop-idle
+PrivateTmp=true
+RemainAfterExit=false
+PassEnvironment=CONTROLLER_COMPOSE
+PassEnvironment=SERVICES_IDLE_TIMEOUT
+PassEnvironment=SERVICES_IDLE
+PassEnvironment=SERVICES_DIR

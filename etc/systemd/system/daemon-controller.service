@@ -1,0 +1,11 @@
+[Unit]
+Description=Controller daemons service
+
+[Service]
+ExecStart=/usr/local/bin/start-daemons
+ExecStop=/usr/local/bin/stop-daemons
+PrivateTmp=true
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
