@@ -1,0 +1,15 @@
+Source: fatc
+Section: devel
+Priority: optional
+Maintainer: "Ryan Northey" <ryan@synca.io>
+Build-Depends: debhelper (>=11~)
+Standards-Version: 4.1.4
+Homepage: https://github.com/phlax/fatc
+
+Package: fatc
+Section: devel
+Priority: optional
+Architecture: all
+Depends: bc, criu, curl, dateutils, docker-ce, docker-triggers, gettext-base, git, iproute2, iputils-ping, jq, moreutils
+Description: Fat controller elastic Docker orchestration
+ Manage docker daemons and dynamic services

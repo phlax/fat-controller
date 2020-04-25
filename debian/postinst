@@ -1,0 +1,5 @@
+#!/bin/bash -e
+
+
+systemctl enable controller
+chown 1000:1000 /etc/systemd/system

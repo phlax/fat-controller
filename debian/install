@@ -1,0 +1,6 @@
+etc/polkit-1/localauthority/50-local.d/* etc/polkit-1/localauthority/50-local.d/
+etc/systemd/system/* etc/systemd/system/
+etc/criu etc
+etc/docker/daemon.json etc/docker
+usr/bin/* usr/bin
+usr/lib/fatc usr/lib
