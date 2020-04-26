@@ -1,0 +1,87 @@
+#!/bin/bash -e
+
+. /usr/lib/fatc/common
+
+
+fatc_idle_check_service () {
+    local dir idle_fun last_activity service service_name started timestamp
+    export service_name="$1"
+    timestamp=$(date +"%s")
+    idle_fun="$2"
+    last_activity="$3"
+    export service="controller.service.${service_name}"
+    if [ -n "$last_activity" ]; then
+	idle=$(echo "$timestamp - $last_activity" | bc)
+	if [ "$idle" -lt "$SERVICES_IDLE_TIMEOUT" ]; then
+	    # if we know service has been *active* for less time than
+	    # the timeout then bail
+	    return
+	fi
+    fi
+    if [ "$(fatc_service_uptime "$service")" -lt "$SERVICES_IDLE_TIMEOUT" ]; then
+	return
+    fi
+    unset fatc_idle_check
+    unset fatc_idle_check_service
+    unset fatc_service_uptime
+    idle=$(fatc_get_service_idle "$service" "$idle_fun")
+    # kill the service if necessary and remove the last_activity field
+    # otherwise update last_activity if necessary
+    if [ "$idle" -gt "$SERVICES_IDLE_TIMEOUT" ]; then
+	jq --arg service_name "${service_name}" \
+	   'del(.[$service_name].last_activity)' "$SERVICES_IDLE" \
+	    | sponge "$SERVICES_IDLE"
+	systemctl stop "$service"
+	fatc_log "Stopped idle service ($service_name), idle: $idle"
+    elif [[ -n "$idle" ]]; then
+	updated_last_activity=$(echo "$timestamp - $idle" | bc)
+	jq --arg service "${service_name}" \
+	   --arg last_activity  "$updated_last_activity" \
+	   '.[$service].last_activity = $last_activity' "$SERVICES_IDLE" \
+	    | sponge "$SERVICES_IDLE"
+    fi
+}
+
+
+fatc_idle_services () {
+    if [ ! -f "$SERVICES_IDLE" ]; then
+	fatc_log_warn "No idle services configured, nothing will be stopped!"
+	exit 1
+    fi
+    jq -cr '. // {} | @base64' "$SERVICES_IDLE"
+}
+
+
+fatc_idle_check () {
+    local checked idle_fun last_activity service services
+    service=$1
+    services=$(echo "$2" | base64 --decode)
+    checked=$(echo "$services" | jq --arg service "$service" '.[$service] // {}')
+    idle_fun=$(echo "$checked" | jq -r '.idle // empty')
+    if [ -z "$idle_fun" ]; then
+	fatc_log_warn "$service has no idle function and will not be stopped"
+    else
+	last_activity=$(echo "$checked" | jq -r '.last_activity // empty')
+	fatc_idle_check_service "$service" "$idle_fun" "$last_activity"
+    fi
+}
+
+
+fatc_idle_stop () {
+    local services
+    export -f fatc_log
+    export -f fatc_log_warn
+    export -f fatc_log_err
+    export -f fatc_get_last_activity
+    export -f fatc_get_service_idle
+    export -f fatc_get_stack_dir
+    export -f fatc_get_stack_compose
+    export -f fatc_get_stack_compose_command
+    export -f fatc_service_uptime
+    export -f fatc_idle_check
+    export -f fatc_idle_check_service
+    services=$(fatc_idle_services)
+    active=$(fatc_active service)
+    # shellcheck disable=SC2086
+    parallel -i bash -c "fatc_idle_check {} $services" -- $active
+}

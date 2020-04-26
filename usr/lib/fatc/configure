@@ -1,0 +1,370 @@
+#!/bin/bash -e
+
+. /usr/lib/fatc/common
+
+
+fatc_configure_proxy_socket () {
+    PROXY_SOCKET="${SYSTEMD_DIR}/controller.${1}.${2}.${3}--proxy.socket"
+    cat > "$PROXY_SOCKET" <<EOF
+[Socket]
+ListenStream=$4
+[Install]
+WantedBy=sockets.target
+EOF
+}
+
+
+fatc_configure_proxy_service () {
+    PROXY_SERVICE="${SYSTEMD_DIR}/controller.${1}.${2}.${3}--proxy.service"
+    cat > "$PROXY_SERVICE" <<EOF
+[Unit]
+Description=Proxy $1 service: $2.$3
+Requires=controller.$1.$2.$3.service
+After=controller.$1.$2.$3.service
+[Service]
+ExecStart=/usr/bin/fatctl start-proxy $1 $2 $3 $4
+PrivateTmp=yes
+EOF
+}
+
+
+fatc_configure_isolated_daemon () {
+    SERVICE="${SYSTEMD_DIR}/controller.daemon.${1}.service"
+    cat > "$SERVICE" <<EOF
+[Unit]
+Description=Daemon service: $1
+Requires=configuration.service $2
+After=configuration.service $2
+
+[Install]
+WantedBy=controller.target
+[Service]
+ExecStart=/usr/bin/fatctl start-daemon-stack $1
+ExecStop=/usr/bin/fatctl stop-daemon-stack $1
+PassEnvironment=DAEMONS_DIR
+PassEnvironment=DAEMONS_SOCKET_DIR
+PassEnvironment=CONTROLLER_COMPOSE
+RemainAfterExit=true
+EOF
+}
+
+
+fatc_configure_daemon_service () {
+    SERVICE="${SYSTEMD_DIR}/controller.daemon.${1}.${2}.service"
+    cat > "$SERVICE" <<EOF
+[Unit]
+Description=Daemon service: $1.$2
+Requires=configuration.service $6
+After=configuration.service $6
+[Install]
+WantedBy=controller.target
+[Service]
+ExecStart=/usr/bin/fatctl start-daemon-stack $1 $2 $5
+ExecStartPost=/usr/bin/fatctl wait-daemon-stack 0.5 $1 $2 "$3" $4
+ExecStop=/usr/bin/fatctl stop-daemon-stack $1 $2 $5
+PassEnvironment=DAEMONS_DIR
+PassEnvironment=DAEMONS_SOCKET_DIR
+PassEnvironment=CONTROLLER_COMPOSE
+PassEnvironment=SOCKET_TIMEOUT
+RemainAfterExit=true
+EOF
+}
+
+
+fatc_configure_service_service () {
+    SERVICE="${SYSTEMD_DIR}/controller.service.${1}.${2}.service"
+    cat > "$SERVICE" <<EOF
+[Unit]
+Description=Service service: $1.$2
+Requires=configuration.service $6
+After=configuration.service $6
+[Install]
+WantedBy=controller.target
+[Service]
+ExecStart=/usr/bin/fatctl start-service-stack $1 $2 $5
+ExecStartPost=/usr/bin/fatctl wait-service-stack 0.5 $1 $2 "$3" $4
+ExecStop=/usr/bin/fatctl stop-service-stack $1 $2 $5
+PassEnvironment=SERVICES_DIR
+PassEnvironment=SERVICES_SOCKET_DIR
+PassEnvironment=CONTROLLER_COMPOSE
+PassEnvironment=USE_CRIU
+PassEnvironment=CRIU_DIR
+PassEnvironment=CONTAINERS_DIR
+PassEnvironment=SOCKET_TIMEOUT
+RemainAfterExit=true
+EOF
+}
+
+
+fatc_configure_backend () {
+    SERVICE="${SYSTEMD_DIR}/controller.service.${1}.${2}.service"
+    cat > "$SERVICE" <<EOF
+[Unit]
+Description=Service service: $1.$2
+[Install]
+WantedBy=controller.target
+[Service]
+ExecStart=/usr/bin/fatctl start-backend $1.$2
+ExecStartPost=/usr/bin/fatctl wait-backend 0.5 $1 $2 "$3" $4
+ExecStop=/usr/bin/fatctl stop-backend $1.$2
+PassEnvironment=SERVICES_DIR
+PassEnvironment=SERVICES_SOCKET_DIR
+PassEnvironment=SOCKET_TIMEOUT
+RemainAfterExit=true
+EOF
+}
+
+
+fatc_configure_service_idle () {
+    local COMPOSE fun idle_fun service stack_name stack_type
+    stack_type=$1
+    stack_name=$2
+    idle_fun=$3
+    COMPOSE=$(fatc_get_stack_compose_command "$stack_type" "$stack_name")
+    export COMPOSE
+    fun=$(echo "$idle_fun" | envsubst '${COMPOSE}')
+    service=$(echo '{}' | jq -cr --arg idle "$fun" '.idle = $idle')
+    if [ ! -f "$SERVICES_IDLE" ]; then
+	mkdir -p "$(dirname "$SERVICES_IDLE")"
+	echo "{}" > "$SERVICES_IDLE"
+    fi
+    jq --arg stack_name "${stack_name}.0" \
+       --argjson service "$service" \
+       '.[$stack_name] = $service' "$SERVICES_IDLE" \
+	| sponge "$SERVICES_IDLE"
+}
+
+
+fatc_configure_update_services () {
+    local stack tracks
+    stack=$(echo "$6" | jq --slurp -R 'rtrimstr("\n") | split(" ") | map({(.): {}}) | add')
+    tracks=$(echo {} | jq --arg track "${2}.${3}" --arg upstream "$5" --arg listen "$4" '.[$track] = {"upstream": $upstream, "listen": $listen}')
+    echo {} | jq --arg name "$2" --argjson stack "$stack" --argjson tracks "$tracks" '.[$name] = {"stack": $stack, "tracks": $tracks}'
+}
+
+
+fatc_configure_track () {
+    local compose config depends_on healthy index line listen \
+	  private_network result \
+	  services stack_name stack_type \
+	  upstream use_criu
+    stack_type=$1
+    stack_name=$2
+    index=$3
+    listen=$4
+    upstream=$5
+    config=$(fatc_get_stack_config "$stack_type" "$stack_name")
+    compose=$(fatc_get_stack_compose "$stack_type" "$stack_name")
+    result=()
+    private_network=no
+    if [ "$upstream" = ":unix:" ]; then
+	upstream=$(fatc_get_upstream_socket "$stack_type" "$stack_name" "$index")
+	if [ "$listen" = ":unix:" ]; then
+	    private_network=yes
+	fi
+    fi
+    healthy=$(jq -cr ".tracks // [] | .[$i] // {} | .healthy" "$config")
+    use_criu=$(jq -cr ".use_criu // false" "$config")
+    depends_on=$(jq -cr '.depends_on // [] | join (" ")' "$config")
+    depends=""
+    for dependency in $depends_on; do
+	depends="${depends} controller.daemon.${dependency}.0.service"
+    done
+    if [ -n "$listen" ]; then
+	fatc_configure_proxy_service "$stack_type" "$stack_name" "$index" "$upstream" "$private_network"
+	if [ "$listen" == ":unix:" ]; then
+	    listen=$(fatc_get_listen_socket "$stack_name" "$index")
+	fi
+	fatc_configure_proxy_socket "$stack_type" "$stack_name" "$index" "$listen"
+	systemctl enable "controller.${stack_type}.${stack_name}.${index}--proxy.socket"
+	result+=("${stack_type}.${stack_name}.${index}: <- $listen")
+    fi
+    if [ -f "$compose" ]; then
+	if [ "$index" = 0 ]; then
+	    fatc_configure_"$stack_type"_service "$stack_name" "$index" "$healthy" "$upstream" "$use_criu" "$depends"
+	    systemctl enable "controller.${stack_type}.${stack_name}.${index}"
+	fi
+	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
+	fatc_configure_update_services "$stack_type" "$stack_name" "$index" "$listen" "$upstream" "$services"
+	result+=("${stack_type}.${stack_name}.${index}: -> docker: $upstream (${services%%*( )})")
+    fi
+    if [[ ! -f "$compose" || $index != 0 ]]; then
+	fatc_configure_backend "$stack_name" "$index" "$healthy" "$upstream"
+	systemctl enable "controller.${stack_type}.${stack_name}.${index}"
+	result+=("${stack_type}.${stack_name}.${index}: -> $upstream")
+    fi
+    for line in "${result[@]}"; do
+	fatc_log "$line"
+    done
+}
+
+
+fatc_configure_tracks () {
+    local config i listen stack_name stack_type track upstream
+    stack_type="$1"
+    stack_name="$2"
+    config="$3"
+    i=0
+    for track in $(jq -cr ".tracks // [] | .[] | @base64" "$config"); do
+	track=$(echo "${track}" | base64 --decode)
+	listen=$(echo "${track}" | jq -r ".listen // empty")
+	upstream=$(echo "${track}" | jq -r ".upstream // empty")
+	fatc_configure_track "$stack_type" "$stack_name" "$i" "$listen" "$upstream"
+	i=$((i + 1))
+    done
+}
+
+
+fatc_configure_composition () {
+    local compose config idle_fun \
+	  stack_name stack_type \
+	  services track_count
+    stack_type="$1"
+    stack_name="$2"
+    track_count="$3"
+    config=$(fatc_get_stack_config "$stack_type" "$stack_name")
+    compose=$(fatc_get_stack_compose "$stack_type" "$stack_name")
+    if [ ! -f "$compose" ]; then
+	return
+    fi
+    if [[ "$track_count" = 0 && "$stack_type" = "daemon" ]]; then
+	depends_on=$(jq -cr '.depends_on // [] | join (" ")' "$config")
+	depends=""
+	for dependency in $depends_on; do
+	    depends="${depends} controller.daemon.${dependency}.0.service"
+	done
+	fatc_configure_isolated_daemon "$stack_name" "$depends"
+	systemctl enable "controller.daemon.${stack_name}"
+	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
+	fatc_log "daemon.${stack_name}.0: docker: ${services%%*( )}"
+    elif [ "$stack_type" = "service" ]; then
+	idle_fun=$(jq -cr ".idle // empty" "$config")
+	if [ -z "$idle_fun" ]; then
+	    fatc_log_warn "Service ($stack_name) has no idle function and will never timeout"
+	else
+	    fatc_configure_service_idle "$stack_type" "$stack_name" "$idle_fun"
+	fi
+    fi
+}
+
+
+fatc_configure_stack () {
+    local config \
+	  stack_name \
+	  stack_type \
+	  track_count
+    stack_type=$1
+    stack_name=$2
+    config=$(fatc_get_stack_config "$stack_type" "$stack_name")
+    if [ ! -f "$config" ]; then
+	return
+    fi
+    fatc_configure_tracks "$stack_type" "$stack_name" "$config"
+    track_count=$(jq -cr --arg stack_name "$stack_name" '.tracks // [] | length' "$config")
+    fatc_configure_composition "$stack_type" "$stack_name" "$track_count"
+}
+
+
+fatc_configure_daemon () {
+    fatc_configure_stack daemon "$1"
+}
+
+
+fatc_configure_service () {
+    fatc_configure_stack service "$1"
+}
+
+
+fatc_configure_start_service () {
+    # only the socket - ie no stack is activated for services
+    # stacks are activated dynamically when the socket is tickled
+    local config i track
+    config=$(fatc_get_stack_config service "$1")
+    if [ -f "$config" ]; then
+	i=0
+	for track in $(jq -cr ".tracks // [] | .[] | @base64" "$config"); do
+	    systemctl start "controller.service.${1}.${i}--proxy.socket"
+	    i=$((i + 1))
+	done
+    fi
+}
+
+
+fatc_configure_start_daemon () {
+    local compose config i track
+    config=$(fatc_get_stack_config daemon "$1")
+    compose=$(fatc_get_stack_compose daemon "$1")
+    if [ -f "$config" ]; then
+	i=0
+	for track in $(jq -cr ".tracks // [] | .[] | @base64" "$config"); do
+	    # create a `track` - ie socket activated channel
+	    systemctl start "controller.daemon.${1}.${i}--proxy.socket"
+	    i=$((i + 1))
+	done
+	if [ -f "$compose" ]; then
+	    # this enforces only one composition stack per daemon
+	    # if there are no tracks then the stack doesnt get an index suffix
+	    # if there are its suffixed with `.0`
+	    if [ "$i" = 0 ]; then
+		systemctl start "controller.daemon.${1}"
+	    else
+		systemctl start "controller.daemon.${1}.0"
+	    fi
+	fi
+    fi
+}
+
+
+fatc_configure_parallel () {
+    local dir stack_type runtype
+    runtype="$1"
+    stack_type="$2"
+    dir=$(fatc_get_stack_dir "$stack_type")
+    if [ -d "$dir" ]; then
+	fatc_parallel "fatc_ls_dirs ${dir}" "fatc_${runtype}_${stack_type}"
+    else
+	fatc_log "No ${stack_type}s to ${runtype}"
+    fi
+}
+
+
+fatc_configure () {
+    docker container prune -f && docker network prune -f && docker volume prune -f && docker image prune -f
+    docker network create fatc
+
+    export -f fatc_configure_backend
+    export -f fatc_configure_composition
+    export -f fatc_configure_track
+    export -f fatc_configure_tracks
+    export -f fatc_configure_stack
+    export -f fatc_configure_proxy_service
+    export -f fatc_configure_proxy_socket
+    export -f fatc_configure_update_services
+
+    export -f fatc_configure_service
+    export -f fatc_configure_service_service
+    export -f fatc_configure_service_idle
+    export -f fatc_configure_start_service
+
+    export -f fatc_configure_daemon
+    export -f fatc_configure_daemon_service
+    export -f fatc_configure_isolated_daemon
+    export -f fatc_configure_start_daemon
+    export -f fatc_log
+    export -f fatc_log_warn
+    export -f fatc_log_err
+
+    export -f fatc_get_listen_socket
+    export -f fatc_get_stack_compose
+    export -f fatc_get_stack_compose_command
+    export -f fatc_get_stack_config
+    export -f fatc_get_stack_dir
+    export -f fatc_get_stack_services
+    export -f fatc_get_sockets_dir
+    export -f fatc_get_upstream_socket
+
+    fatc_configure_parallel configure daemon
+    fatc_configure_parallel configure service
+    fatc_configure_parallel configure_start service
+    fatc_configure_parallel configure_start daemon
+}

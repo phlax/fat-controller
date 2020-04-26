@@ -1,0 +1,11 @@
+#!/bin/bash -e
+
+
+. /usr/lib/fatc/common
+. /usr/lib/fatc/controller
+. /usr/lib/fatc/configure
+. /usr/lib/fatc/stack
+. /usr/lib/fatc/idle
+. /usr/lib/fatc/proc
+. /usr/lib/fatc/backend
+. /usr/lib/fatc/proxy

@@ -1,0 +1,26 @@
+#!/bin/bash -e
+
+
+. /usr/lib/fatc/common
+
+
+fatc_proxy_start () {
+    local address backend ip port upstream
+    upstream=$4
+    if [[ "$upstream" = :backend:* ]]; then
+	backend=$(fatc_backend_resolve "${@}")
+	upstream="${4//:backend:/$backend:}"
+    elif [[ $upstream = :* ]]; then
+	# TODO: FIX TIMEOUT
+	address=$(echo "$upstream" | cut -d: -f2)
+	port=$(echo "$upstream" | cut -d: -f3)
+	until [ -n "$ip" ]; do
+	    ip=$(fatc_stack_resolve "$1" "$2" "$address")
+	    if [ -z "$ip" ]; then
+		sleep .5
+	    fi
+	done
+	upstream="$ip:$port"
+    fi
+    exec /lib/systemd/systemd-socket-proxyd "$upstream"
+}

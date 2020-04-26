@@ -1,0 +1,45 @@
+#!/bin/bash -e
+
+
+. /usr/lib/fatc/common
+
+
+fatc_backend_start () {
+    fatc_log "Backend started: ${*}"
+}
+
+
+fatc_backend_stop () {
+    fatc_log "Backend stopped: ${*}"
+}
+
+
+fatc_backend_wait () {
+    local backend \
+	  cmd \
+	  health \
+	  now \
+	  start \
+	  step \
+	  taken \
+	  upstream
+    start=$(date +%s)
+    step=$1
+    health=$4
+    upstream=$5
+    if [[ -z "$health" || "$health" = null ]]; then
+	return
+    fi
+    backend=$(fatc_backend_resolve "${@}")
+    export UPSTREAM="${upstream//:backend:/$backend:}"
+    cmd=$(echo "$health" | envsubst '${UPSTREAM}')
+    until $cmd; do
+	sleep "$step"
+	now=$(date +%s)
+	taken=$(echo "$now - $start" | bc)
+	if [[ "$taken" -gt "$SOCKET_TIMEOUT" ]]; then
+	    fatc_log_err "Timed out waiting for backend: $cmd"
+	    exit 1
+	fi
+    done
+}

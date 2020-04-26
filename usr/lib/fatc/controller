@@ -1,0 +1,14 @@
+#!/bin/bash -e
+
+
+. /usr/lib/fatc/common
+
+
+fatc_controller_start () {
+    fatc_log "Controller started"
+}
+
+
+fatc_controller_stop () {
+    fatc_log "Stopping controller"
+}

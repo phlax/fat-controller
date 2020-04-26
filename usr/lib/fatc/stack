@@ -1,0 +1,65 @@
+#!/bin/bash -e
+
+. /usr/lib/fatc/common
+
+
+stackctl_status () {
+    local stack_type=$1 \
+	  stack_name=$2
+    shift 2
+    stackctl_system status "${stack_type} ${stack_name}" "${@}"
+}
+
+
+stackctl_stack () {
+    local stack_type=$1 \
+	  stack_name=$2
+    shift 2
+    cd "/var/lib/controller/${stack_type}s/${stack_name}"
+    /controller/bin/docker-compose -p "${stack_type}_${stack_name}" "${@}"
+}
+
+
+stackctl_system () {
+    local cmd=$1 \
+	  stack_type=$1 \
+	  stack_name=$2 \
+
+    shift 3
+    systemctl "$cmd" "controller.${stack_type}.${stack_name}" "${@}"
+}
+
+
+stackctl_journal () {
+    local stack_type=$1 \
+	  stack_name=$2
+    shift 2
+    journalctl -u "controller.${stack_type}.${stack_name}" "${@}"
+}
+
+
+stackctl () {
+    local stack_type=$1 \
+	  cmd=$2
+    shift 2
+    case $cmd in
+	journal )
+	    stackctl_journal "$stack_type" "${@}"
+	    ;;
+	stack )
+	    stackctl_stack "$stack_type" "${@}"
+	    ;;
+	start )
+	    stackctl_system start "$stack_type" "{@}"
+	    ;;
+	status )
+	    stackctl_system status "$stack_type" "${@}"
+	    ;;
+	stop )
+	    stackctl_system stop "$stack_type" "{@}"
+	    ;;
+	system )
+	    stackctl_system "$stack_type" "${@}"
+	    ;;
+    esac
+}

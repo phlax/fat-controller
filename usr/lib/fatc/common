@@ -1,0 +1,192 @@
+#!/bin/bash -e
+
+
+fatc_active () {
+    local stack_type
+    stack_type=$1
+    for stack in $(systemctl list-units --state=active); do
+	stack=$(echo "$stack" | awk '{$1=$1};1' | cut -d' ' -f1) || continue
+	stack=$(echo "$stack" | grep -E "^controller.${stack_type}") || continue
+	stack=$(echo "$stack" | grep -vE "^controller.${stack_type}$") || continue
+	stack=$(echo "$stack" | grep -E "service$") || continue
+	stack=$(echo "$stack" | grep -vE '\-\-proxy.service$') || continue
+	echo "${stack%.*}" | cut -d. -f3-
+    done
+}
+
+
+fatc_backend_resolve () {
+    cat /var/lib/controller/backend
+}
+
+
+fatc_get_last_activity () {
+    local COMPOSE compose_file idle_fun service stack_dir stack_name
+    service="$1"
+    idle_fun="$2"
+    stack_name="${service_name%.*}"
+    compose_file=$(fatc_get_stack_compose service "$stack_name")
+    stack_dir=$(dirname "$compose_file")
+    COMPOSE=$(fatc_get_stack_compose_command service "$stack_name")
+    export COMPOSE="$COMPOSE"
+    export SERVICE="$service"
+    unset fatc_get_last_activity
+    unset fatc_get_stack_dir
+    unset fatc_get_stack_compose
+    unset fatc_get_stack_compose_command
+    cd "${stack_dir}"
+    exec "$idle_fun"
+}
+
+
+fatc_get_listen_socket () {
+    local index stack_name
+    stack_name="$1"
+    index="$2"
+    echo "$CONTROLLER_SOCKETS_DIR/$stack_name.$index.sock"
+}
+
+
+fatc_get_sockets_dir () {
+    local stack_type
+    stack_type="$1"
+    if [ "$stack_type" = "service" ]; then
+	echo "$SERVICES_SOCKET_DIR"
+    else
+	echo "$DAEMONS_SOCKET_DIR"
+    fi
+}
+
+
+fatc_get_stack_config () {
+    local dir stack_type stack_name
+    stack_type="$1"
+    stack_name="$2"
+    dir=$(fatc_get_stack_dir "$stack_type")
+    echo "${dir}/${stack_name}/${stack_type}.json"
+}
+
+
+fatc_get_stack_dir () {
+    local stack_type
+    stack_type="$1"
+    if [ "$stack_type" = "service" ]; then
+	echo "$SERVICES_DIR"
+    else
+	echo "$DAEMONS_DIR"
+    fi
+
+}
+
+
+fatc_get_stack_services () {
+    local dir stack_type stack_name
+    stack_type="$1"
+    stack_name="$2"
+    dir=$(fatc_get_stack_dir "$stack_type")
+    cd "${dir}/${stack_name}"
+    $CONTROLLER_COMPOSE config --services | tr '\r\n' ' '
+}
+
+
+fatc_get_stack_compose () {
+    local dir stack_type stack_name
+    stack_type="$1"
+    stack_name="$2"
+    dir=$(fatc_get_stack_dir "$stack_type")
+    echo "$dir/$stack_name/docker-compose.yml"
+}
+
+
+fatc_get_stack_compose_command () {
+    local compose stack_type stack_name
+    stack_type="$1"
+    stack_name="$2"
+    compose=$(fatc_get_stack_compose "$stack_type" "$stack_name")
+    echo "${CONTROLLER_COMPOSE} \
+              -p ${stack_type}_${stack_name} \
+              -f ${compose} \
+              --skip-hostname-check \
+              --no-ansi"
+}
+
+
+fatc_get_upstream_socket () {
+    local index sockets_dir stack_type stack_name
+    stack_type="$1"
+    stack_name="$2"
+    index="$3"
+    sockets_dir=$(fatc_get_sockets_dir "$stack_type")
+    echo "${sockets_dir}/${stack_name}/${stack_type}.${index}.sock"
+}
+
+
+fatc_log () {
+    echo "${*}"
+}
+
+
+fatc_log_warn () {
+    echo "WARNING: ${*}" >&2
+}
+
+
+fatc_log_err () {
+    echo "ERROR: ${*}" >&2
+}
+
+
+fatc_ls_dirs () {
+    find "$1" -maxdepth 1 -name '*' -type d -printf '%f\n'
+}
+
+
+fatc_parallel () {
+    local cores
+    cores=$(grep -F -c processor /proc/cpuinfo)
+    $1 \
+	| xargs -n1 -P"$cores" \
+		--replace \
+		bash -ec "${2} {} ${3}"
+}
+
+
+fatc_get_service_idle () {
+    local idle_fun service timestamp
+    service="$1"
+    idle_fun="$2"
+    timestamp=$(date +"%s")
+    unset fatc_get_service_idle
+    updated_last_activity=$(fatc_get_last_activity "$service" "$idle_fun")
+    if [ -n "$updated_last_activity" ]; then
+	echo "$timestamp - $updated_last_activity" | bc
+    else
+	fatc_log_warn "Last activity function (${service}:${idle_fun}) did not return a valid number"
+	echo "$SERVICES_IDLE_TIMEOUT + 1" | bc
+    fi
+}
+
+fatc_service_uptime () {
+    local service started started_timestamp timestamp
+    timestamp=$(date +"%s")
+    # convert systemd datetime to unix timestamp
+    service="$1"
+    started=$(systemctl show "$service" --property=ActiveEnterTimestamp | cut -d= -f2)
+    started_timestamp=$(date --date="$started" +"%s")
+    echo "$timestamp - $started_timestamp" | bc
+}
+
+
+fatc_stack_resolve () {
+    local address container_name container_id network service_name stack_name stack_type
+    stack_type="$1"
+    stack_name="$2"
+    service_name="$3"
+    network=fatc
+    container_name="${stack_type}_${stack_name}_${service_name}_1"
+    container_id=$(docker ps --no-trunc -q -f "name=$container_name")
+    address=$(docker network inspect "$network" | jq -r --arg id "$container_id" '.[].Containers[$id].IPv4Address // empty')
+    if [ -n "$address" ]; then
+	echo "$address" | cut -d/ -f1
+    fi
+}
