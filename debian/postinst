@@ -1,5 +1,14 @@
 #!/bin/bash -e
 
 
+if [ ! -f /etc/docker/daemon.json ];then
+    mkdir -p /etc/docker
+    echo '{"experimental": true}' >> /etc/docker/daemon.json
+else
+    jq '.experimental = true' /etc/docker/daemon.json \
+	| sponge /etc/docker/daemon.json
+fi
+
+
 systemctl enable controller
 chown 1000:1000 /etc/systemd/system
