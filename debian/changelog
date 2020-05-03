@@ -1,4 +1,10 @@
-fatc (0.0.1) UNRELEASED; urgency=medium
+fatc (0.0.2) UNRELEASED; urgency=medium
+
+  * Fix dont set docker/daemon.json, edit it
+
+ -- Ryan Northey <ryan@synca.io>  Sun, 03 May 2020 15:14:36 +0100
+
+fatc (0.0.1) buster; urgency=medium
 
   * Initial release.
 
