@@ -1,4 +1,10 @@
-fatc (0.0.3) UNRELEASED; urgency=medium
+fatc (0.0.4) UNRELEASED; urgency=medium
+
+  * Add list services/daemons commands
+
+ -- Ryan Northey <ryan@synca.io>  Mon, 04 May 2020 06:29:15 +0100
+
+fatc (0.0.3) buster; urgency=medium
 
   * Update rationalize docker ARGs
   * Update namespace env vars
