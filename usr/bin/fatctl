@@ -3,64 +3,106 @@
 
 . /usr/lib/fatc/functions
 
-
+PROGRAM=$0
 ARG=$1
 shift
 
 
+usage () {
+    cat <<EOF
+
+    ${PROGRAM} COMMAND
+
+    Commands:
+
+    d, daemon               Configure and retrieve information about daemons
+    s, service              Configure and retrieve information about services
+
+    list-daemons            List configured daemons (TODO)
+    list-services           List configured services (TODO)
+
+
+    Internal commands, used in systemd units:
+
+    configure               Configure systemd units from fatctl config
+    resolve                 Resolve the IP for a container service
+
+    start-backend           Start backend track
+    start-controller        Start fatc controller
+    start-daemon-stack      Start daemon's container stack
+    start-proxy             Start proxy track
+    start-service-stack     Start service's container stack
+
+    stop-backend            Stop backend track
+    stop-controller         Stop fatc controller
+    stop-daemon-stack       Stop daemon's container stack
+    stop-idle               Stop idle services
+    stop-proxy              Stop proxy track
+    stop-service-stack      Stop service's container stack
+
+    wait-backend            Wait for backend to become ready
+    wait-daemon-stack       Wait for daemon stack to become ready
+    wait-service-stack      Wait for service stack to become ready
+
+EOF
+}
+
+
 case $ARG in
     configure )
-	fatc_configure
-	;;
+        fatc_configure
+        ;;
     d | daemon)
-	stackctl daemon "${@}"
-	;;
+        stackctl daemon "${@}"
+        ;;
     s | service )
-	stackctl service "${@}"
-	;;
+        stackctl service "${@}"
+        ;;
     resolve )
-	what=$1
-	shift
-	fatc_"$what"_resolve "${@}"
-	;;
-
+        what=$1
+        shift
+        fatc_"$what"_resolve "${@}"
+        ;;
     start-backend )
-	fatc_backend_start "${@}"
-	;;
+        fatc_backend_start "${@}"
+        ;;
     start-controller )
-	fatc_controller_start "${@}"
-	;;
+        fatc_controller_start "${@}"
+        ;;
     start-daemon-stack )
-	fatc_stack_daemon_start "${@}"
-	;;
+        fatc_stack_daemon_start "${@}"
+        ;;
     start-proxy )
-	fatc_proxy_start "${@}"
-	;;
+        fatc_proxy_start "${@}"
+        ;;
     start-service-stack )
-	fatc_stack_service_start "${@}"
-	;;
+        fatc_stack_service_start "${@}"
+        ;;
     stop-backend )
-	fatc_backend_stop "${@}"
-	;;
+        fatc_backend_stop "${@}"
+        ;;
     stop-controller )
-	fatc_controller_stop "${@}"
-	;;
+        fatc_controller_stop "${@}"
+        ;;
     stop-daemon-stack )
-	fatc_stack_daemon_stop "${@}"
-	;;
+        fatc_stack_daemon_stop "${@}"
+        ;;
     stop-idle )
-	fatc_idle_stop
-	;;
+        fatc_idle_stop
+        ;;
     stop-service-stack )
-	fatc_stack_service_stop "${@}"
-	;;
+        fatc_stack_service_stop "${@}"
+        ;;
     wait-backend )
-	fatc_backend_wait "${@}"
-	;;
+        fatc_backend_wait "${@}"
+        ;;
     wait-daemon-stack )
-	fatc_stack_daemon_wait "${@}"
-	;;
+        fatc_stack_daemon_wait "${@}"
+        ;;
     wait-service-stack )
-	fatc_stack_service_wait "${@}"
-	;;
+        fatc_stack_service_wait "${@}"
+        ;;
+    * )
+        usage
+        ;;
 esac
