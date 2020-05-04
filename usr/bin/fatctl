@@ -18,8 +18,8 @@ usage () {
     d, daemon               Configure and retrieve information about daemons
     s, service              Configure and retrieve information about services
 
-    list-daemons            List configured daemons (TODO)
-    list-services           List configured services (TODO)
+    list-daemons            List configured daemons
+    list-services           List configured services
 
 
     Internal commands, used in systemd units:
@@ -57,6 +57,12 @@ case $ARG in
         ;;
     s | service )
         stackctl service "${@}"
+        ;;
+    list-daemons )
+        fatc_list_daemons
+        ;;
+    list-services )
+        fatc_list_services
         ;;
     resolve )
         what=$1

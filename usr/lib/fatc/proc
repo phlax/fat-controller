@@ -185,3 +185,13 @@ fatc_stack_daemon_wait () {
 	fi
     done
 }
+
+
+fatc_list_services () {
+    fatc_ls_dirs "${FATC_SERVICES}"
+}
+
+
+fatc_list_daemons () {
+    fatc_ls_dirs "${FATC_DAEMONS}"
+}
