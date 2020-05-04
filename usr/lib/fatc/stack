@@ -26,7 +26,7 @@ stackctl_system () {
 	  stack_name=$2 \
 
     shift 3
-    systemctl "$cmd" "controller.${stack_type}.${stack_name}" "${@}"
+    systemctl "$cmd" "fatc.${stack_type}.${stack_name}" "${@}"
 }
 
 
@@ -34,7 +34,7 @@ stackctl_journal () {
     local stack_type=$1 \
 	  stack_name=$2
     shift 2
-    journalctl -u "controller.${stack_type}.${stack_name}" "${@}"
+    journalctl -u "fatc.${stack_type}.${stack_name}" "${@}"
 }
 
 

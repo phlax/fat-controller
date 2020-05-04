@@ -1,10 +1,10 @@
 #!/bin/bash -e
 
 
-FATC_BIN=${FATC_BIN:-/controller/bin}
+FATC_BIN=${FATC_BIN:-/fatc/bin}
 FATC_COMPOSE=${FATC_COMPOSE:-$FATC_BIN/docker-compose}
-FATC_RUN=${FATC_RUN:-/var/run/controller}
-FATC_LIB=${FATC_LIB:-/var/lib/controller}
+FATC_RUN=${FATC_RUN:-/var/run/fatc}
+FATC_LIB=${FATC_LIB:-/var/lib/fatc}
 FATC_SOCKETS=${FATC_SOCKETS:-$FATC_RUN/sockets}
 FATC_SYSTEMD=${FATC_SYSTEMD:-/etc/systemd/system}
 
@@ -27,8 +27,8 @@ fatc_active () {
     stack_type=$1
     for stack in $(systemctl list-units --state=active); do
 	stack=$(echo "$stack" | awk '{$1=$1};1' | cut -d' ' -f1) || continue
-	stack=$(echo "$stack" | grep -E "^controller.${stack_type}") || continue
-	stack=$(echo "$stack" | grep -vE "^controller.${stack_type}$") || continue
+	stack=$(echo "$stack" | grep -E "^fatc.${stack_type}") || continue
+	stack=$(echo "$stack" | grep -vE "^fatc.${stack_type}$") || continue
 	stack=$(echo "$stack" | grep -E "service$") || continue
 	stack=$(echo "$stack" | grep -vE '\-\-proxy.service$') || continue
 	echo "${stack%.*}" | cut -d. -f3-

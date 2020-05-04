@@ -4,7 +4,7 @@
 
 
 fatc_configure_proxy_socket () {
-    PROXY_SOCKET="${FATC_SYSTEMD}/controller.${1}.${2}.${3}--proxy.socket"
+    PROXY_SOCKET="${FATC_SYSTEMD}/fatc.${1}.${2}.${3}--proxy.socket"
     cat > "$PROXY_SOCKET" <<EOF
 [Socket]
 ListenStream=$4
@@ -15,12 +15,12 @@ EOF
 
 
 fatc_configure_proxy_service () {
-    PROXY_SERVICE="${FATC_SYSTEMD}/controller.${1}.${2}.${3}--proxy.service"
+    PROXY_SERVICE="${FATC_SYSTEMD}/fatc.${1}.${2}.${3}--proxy.service"
     cat > "$PROXY_SERVICE" <<EOF
 [Unit]
 Description=Proxy $1 service: $2.$3
-Requires=controller.$1.$2.$3.service
-After=controller.$1.$2.$3.service
+Requires=fatc.$1.$2.$3.service
+After=fatc.$1.$2.$3.service
 [Service]
 ExecStart=/usr/bin/fatctl start-proxy $1 $2 $3 $4
 PrivateTmp=yes
@@ -29,7 +29,7 @@ EOF
 
 
 fatc_configure_isolated_daemon () {
-    SERVICE="${FATC_SYSTEMD}/controller.daemon.${1}.service"
+    SERVICE="${FATC_SYSTEMD}/fatc.daemon.${1}.service"
     cat > "$SERVICE" <<EOF
 [Unit]
 Description=Daemon service: $1
@@ -37,7 +37,7 @@ Requires=configuration.service $2
 After=configuration.service $2
 
 [Install]
-WantedBy=controller.target
+WantedBy=fatc.target
 [Service]
 ExecStart=/usr/bin/fatctl start-daemon-stack $1
 ExecStop=/usr/bin/fatctl stop-daemon-stack $1
@@ -50,14 +50,14 @@ EOF
 
 
 fatc_configure_daemon_service () {
-    SERVICE="${FATC_SYSTEMD}/controller.daemon.${1}.${2}.service"
+    SERVICE="${FATC_SYSTEMD}/fatc.daemon.${1}.${2}.service"
     cat > "$SERVICE" <<EOF
 [Unit]
 Description=Daemon service: $1.$2
 Requires=configuration.service $6
 After=configuration.service $6
 [Install]
-WantedBy=controller.target
+WantedBy=fatc.target
 [Service]
 ExecStart=/usr/bin/fatctl start-daemon-stack $1 $2 $5
 ExecStartPost=/usr/bin/fatctl wait-daemon-stack 0.5 $1 $2 "$3" $4
@@ -72,14 +72,14 @@ EOF
 
 
 fatc_configure_service_service () {
-    SERVICE="${FATC_SYSTEMD}/controller.service.${1}.${2}.service"
+    SERVICE="${FATC_SYSTEMD}/fatc.service.${1}.${2}.service"
     cat > "$SERVICE" <<EOF
 [Unit]
 Description=Service service: $1.$2
 Requires=configuration.service $6
 After=configuration.service $6
 [Install]
-WantedBy=controller.target
+WantedBy=fatc.target
 [Service]
 ExecStart=/usr/bin/fatctl start-service-stack $1 $2 $5
 ExecStartPost=/usr/bin/fatctl wait-service-stack 0.5 $1 $2 "$3" $4
@@ -97,12 +97,12 @@ EOF
 
 
 fatc_configure_backend () {
-    SERVICE="${FATC_SYSTEMD}/controller.service.${1}.${2}.service"
+    SERVICE="${FATC_SYSTEMD}/fatc.service.${1}.${2}.service"
     cat > "$SERVICE" <<EOF
 [Unit]
 Description=Service service: $1.$2
 [Install]
-WantedBy=controller.target
+WantedBy=fatc.target
 [Service]
 ExecStart=/usr/bin/fatctl start-backend $1.$2
 ExecStartPost=/usr/bin/fatctl wait-backend 0.5 $1 $2 "$3" $4
@@ -168,7 +168,7 @@ fatc_configure_track () {
     depends_on=$(jq -cr '.depends_on // [] | join (" ")' "$config")
     depends=""
     for dependency in $depends_on; do
-	depends="${depends} controller.daemon.${dependency}.0.service"
+	depends="${depends} fatc.daemon.${dependency}.0.service"
     done
     if [ -n "$listen" ]; then
 	fatc_configure_proxy_service "$stack_type" "$stack_name" "$index" "$upstream" "$private_network"
@@ -176,13 +176,13 @@ fatc_configure_track () {
 	    listen=$(fatc_get_listen_socket "$stack_name" "$index")
 	fi
 	fatc_configure_proxy_socket "$stack_type" "$stack_name" "$index" "$listen"
-	systemctl enable "controller.${stack_type}.${stack_name}.${index}--proxy.socket"
+	systemctl enable "fatc.${stack_type}.${stack_name}.${index}--proxy.socket"
 	result+=("${stack_type}.${stack_name}.${index}: <- $listen")
     fi
     if [ -f "$compose" ]; then
 	if [ "$index" = 0 ]; then
 	    fatc_configure_"$stack_type"_service "$stack_name" "$index" "$healthy" "$upstream" "$use_criu" "$depends"
-	    systemctl enable "controller.${stack_type}.${stack_name}.${index}"
+	    systemctl enable "fatc.${stack_type}.${stack_name}.${index}"
 	fi
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
 	fatc_configure_update_services "$stack_type" "$stack_name" "$index" "$listen" "$upstream" "$services"
@@ -190,7 +190,7 @@ fatc_configure_track () {
     fi
     if [[ ! -f "$compose" || $index != 0 ]]; then
 	fatc_configure_backend "$stack_name" "$index" "$healthy" "$upstream"
-	systemctl enable "controller.${stack_type}.${stack_name}.${index}"
+	systemctl enable "fatc.${stack_type}.${stack_name}.${index}"
 	result+=("${stack_type}.${stack_name}.${index}: -> $upstream")
     fi
     for line in "${result[@]}"; do
@@ -231,10 +231,10 @@ fatc_configure_composition () {
 	depends_on=$(jq -cr '.depends_on // [] | join (" ")' "$config")
 	depends=""
 	for dependency in $depends_on; do
-	    depends="${depends} controller.daemon.${dependency}.0.service"
+	    depends="${depends} fatc.daemon.${dependency}.0.service"
 	done
 	fatc_configure_isolated_daemon "$stack_name" "$depends"
-	systemctl enable "controller.daemon.${stack_name}"
+	systemctl enable "fatc.daemon.${stack_name}"
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
 	fatc_log "daemon.${stack_name}.0: docker: ${services%%*( )}"
     elif [ "$stack_type" = "service" ]; then
@@ -283,7 +283,7 @@ fatc_configure_start_service () {
     if [ -f "$config" ]; then
 	i=0
 	for track in $(jq -cr ".tracks // [] | .[] | @base64" "$config"); do
-	    systemctl start "controller.service.${1}.${i}--proxy.socket"
+	    systemctl start "fatc.service.${1}.${i}--proxy.socket"
 	    i=$((i + 1))
 	done
     fi
@@ -298,7 +298,7 @@ fatc_configure_start_daemon () {
 	i=0
 	for track in $(jq -cr ".tracks // [] | .[] | @base64" "$config"); do
 	    # create a `track` - ie socket activated channel
-	    systemctl start "controller.daemon.${1}.${i}--proxy.socket"
+	    systemctl start "fatc.daemon.${1}.${i}--proxy.socket"
 	    i=$((i + 1))
 	done
 	if [ -f "$compose" ]; then
@@ -306,9 +306,9 @@ fatc_configure_start_daemon () {
 	    # if there are no tracks then the stack doesnt get an index suffix
 	    # if there are its suffixed with `.0`
 	    if [ "$i" = 0 ]; then
-		systemctl start "controller.daemon.${1}"
+		systemctl start "fatc.daemon.${1}"
 	    else
-		systemctl start "controller.daemon.${1}.0"
+		systemctl start "fatc.daemon.${1}.0"
 	    fi
 	fi
     fi

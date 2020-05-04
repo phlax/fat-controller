@@ -1,5 +1,5 @@
 [Unit]
-Description=Idle controller timer
+Description=Idle fatc timer
 Requires=idle.service
 StopWhenUnneeded=true
 

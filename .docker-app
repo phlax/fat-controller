@@ -4,7 +4,7 @@ export BUILD_CONTEXT=github.com/phlax/docker-app#master:context
 export BUILD_IMAGE=phlax/fatc
 export APP_NAME=system
 export APP_USERNAME=system
-export APP_DIR=/controller
+export APP_DIR=/fatc
 export SYSTEM_PKGS="\
        docker-ce \
        criu"

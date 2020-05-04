@@ -1,5 +1,5 @@
 [Unit]
-Description=Idle controller service
+Description=Idle fatc service
 
 [Service]
 ExecStart=/usr/bin/fatctl stop-idle

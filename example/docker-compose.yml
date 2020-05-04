@@ -1,5 +1,5 @@
 #
-# docker-compose for Fat controller stack
+# docker-compose for fatc stack
 #
 # run this composition from the parent directory
 #
@@ -32,32 +32,32 @@ services:
     volumes:
       # docker socket
       # - /var/run/docker.sock:/var/run/docker.sock
-      - /var/lib/controller/docker:/var/lib/docker
+      - /var/lib/fatc/docker:/var/lib/docker
 
       # systemd requirement
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
 
       # the easiest config for sockets is using a real file path
       # preferably one mounted on tmpfs
-      # - /var/run/controller/sockets:/var/run/controller/sockets
-      - ${PWD}/example/sockets:/var/run/controller/sockets
+      # - /var/run/fatc/sockets:/var/run/fatc/sockets
+      - ${PWD}/example/sockets:/var/run/fatc/sockets
 
       # this is used to determine where to send :backend: requests
-      # - /var/lib/controller/backend:/var/lib/controller/backend:ro
-      - ${PWD}/example/backend:/var/lib/controller/backend:ro
+      # - /var/lib/fatc/backend:/var/lib/fatc/backend:ro
+      - ${PWD}/example/backend:/var/lib/fatc/backend:ro
 
-      - ${PWD}/example/daemon0:/var/lib/controller/daemons/daemon0
-      - ${PWD}/example/daemon1:/var/lib/controller/daemons/daemon1
-      - ${PWD}/example/daemon2:/var/lib/controller/daemons/daemon2
-      - ${PWD}/example/daemon3:/var/lib/controller/daemons/daemon3
-      - ${PWD}/example/daemon4:/var/lib/controller/daemons/daemon4
+      - ${PWD}/example/daemon0:/var/lib/fatc/daemons/daemon0
+      - ${PWD}/example/daemon1:/var/lib/fatc/daemons/daemon1
+      - ${PWD}/example/daemon2:/var/lib/fatc/daemons/daemon2
+      - ${PWD}/example/daemon3:/var/lib/fatc/daemons/daemon3
+      - ${PWD}/example/daemon4:/var/lib/fatc/daemons/daemon4
 
-      - ${PWD}/example/service0:/var/lib/controller/services/service0
-      - ${PWD}/example/service1:/var/lib/controller/services/service1
-      - ${PWD}/example/service2:/var/lib/controller/services/service2
-      - ${PWD}/example/service3:/var/lib/controller/services/service3
-      - ${PWD}/example/service4:/var/lib/controller/services/service4
-      - ${PWD}/example/service5:/var/lib/controller/services/service5
+      - ${PWD}/example/service0:/var/lib/fatc/services/service0
+      - ${PWD}/example/service1:/var/lib/fatc/services/service1
+      - ${PWD}/example/service2:/var/lib/fatc/services/service2
+      - ${PWD}/example/service3:/var/lib/fatc/services/service3
+      - ${PWD}/example/service4:/var/lib/fatc/services/service4
+      - ${PWD}/example/service5:/var/lib/fatc/services/service5
 
     tmpfs:
       # systemd requires these to be on tmpfs
@@ -78,7 +78,7 @@ services:
     healthcheck:
       interval: 10s
       retries: 20
-      test: systemctl status controller | grep active
+      test: systemctl status fatc | grep active
 
   external-http:
     image: nginx

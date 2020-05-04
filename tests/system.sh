@@ -10,37 +10,36 @@ docker-compose logs fatc
 
 $FC_STATUS
 $FC_STATUS -n500 configuration
-$FC_STATUS controller -p ActiveState | grep -v inactive | grep active
+$FC_STATUS fatc -p ActiveState | grep -v inactive | grep active
 
-# $FC_EXEC ls /etc/systemd/system
 
-## main controller service
-$FC_EXEC ls /etc/systemd/system | grep '^controller\.service' | tr '\n\r' '\n' | grep "^controller\.service$"
+## main fatc service
+$FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep '^fatc\.service' | tr '\n\r' '\n' | grep "^fatc\.service$"
 
 ## configuration service
-$FC_EXEC ls /etc/systemd/system | grep '^configuration\.service' | tr '\n\r' '\n' | grep "^configuration\.service$"
+$FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep '^configuration\.service' | tr '\n\r' '\n' | grep "^configuration\.service$"
 
 ## idle timer and service
-$FC_EXEC ls /etc/systemd/system | grep idle
+$FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep idle
 
 ## services
-$FC_EXEC ls /etc/systemd/system | grep '^controller\.service' | tr '\n\r' '\n' | grep "\.service$" | grep -v "^controller\.service$" | grep -v "\-\-proxy"
+$FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep '^fatc\.service' | tr '\n\r' '\n' | grep "\.service$" | grep -v "^fatc\.service$" | grep -v "\-\-proxy"
 $FC_EXEC fatctl list-services | grep service
 
 ## service proxies
-$FC_EXEC ls /etc/systemd/system | grep '^controller\.service' | tr '\n\r' '\n' | grep "\.service$" | grep -v "^controller\.service$" | grep "\-\-proxy.service$"
+$FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep '^fatc\.service' | tr '\n\r' '\n' | grep "\.service$" | grep -v "^fatc\.service$" | grep "\-\-proxy.service$"
 
 # service sockets
-$FC_EXEC ls /etc/systemd/system | grep '^controller\.service' | tr '\n\r' '\n' | grep "\.socket$"
+$FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep '^fatc\.service' | tr '\n\r' '\n' | grep "\.socket$"
 
 ## daemons
-$FC_EXEC ls /etc/systemd/system | grep '^controller\.daemon' | tr '\n\r' '\n' | grep "\.service$" | grep -v "\-\-proxy"
+$FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep '^fatc\.daemon' | tr '\n\r' '\n' | grep "\.service$" | grep -v "\-\-proxy"
 $FC_EXEC fatctl list-daemons | grep daemon
 
 ## daemon proxies
-$FC_EXEC ls /etc/systemd/system | grep '^controller\.daemon' | tr '\n\r' '\n' | grep "\.service$" | grep "\-\-proxy.service$"
+$FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep '^fatc\.daemon' | tr '\n\r' '\n' | grep "\.service$" | grep "\-\-proxy.service$"
 
 ## daemon sockets
-$FC_EXEC ls /etc/systemd/system | grep '^controller\.daemon' | tr '\n\r' '\n' | grep "\.socket$"
+$FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep '^fatc\.daemon' | tr '\n\r' '\n' | grep "\.socket$"
 
 docker-compose down

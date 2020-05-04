@@ -29,10 +29,10 @@ RUN apt update \
 
 ARG FATC_SYSTEMD=/etc/systemd/system
 
-ARG FATC_BIN=/controller/bin
+ARG FATC_BIN=/fatc/bin
 ARG FATC_COMPOSE=$FATC_BIN/docker-compose
-ARG FATC_RUN=/var/run/controller
-ARG FATC_LIB=/var/lib/controller
+ARG FATC_RUN=/var/run/fatc
+ARG FATC_LIB=/var/lib/fatc
 ARG FATC_SOCKETS=$FATC_RUN/sockets
 
 ARG FATC_PROXY_SOCKETS=$FATC_SOCKETS/fc

@@ -1,0 +1,14 @@
+#!/bin/bash -e
+
+
+. /usr/lib/fatc/common
+
+
+fatc_start () {
+    fatc_log "Fatc started"
+}
+
+
+fatc_stop () {
+    fatc_log "Fatc stopped"
+}

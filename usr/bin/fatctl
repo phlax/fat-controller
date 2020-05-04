@@ -27,14 +27,14 @@ usage () {
     configure               Configure systemd units from fatctl config
     resolve                 Resolve the IP for a container service
 
+    start		    Start fatc
     start-backend           Start backend track
-    start-controller        Start fatc controller
     start-daemon-stack      Start daemon's container stack
     start-proxy             Start proxy track
     start-service-stack     Start service's container stack
 
+    stop		    Stop fatc
     stop-backend            Stop backend track
-    stop-controller         Stop fatc controller
     stop-daemon-stack       Stop daemon's container stack
     stop-idle               Stop idle services
     stop-proxy              Stop proxy track
@@ -69,11 +69,11 @@ case $ARG in
         shift
         fatc_"$what"_resolve "${@}"
         ;;
+    start )
+        fatc_start "${@}"
+        ;;
     start-backend )
         fatc_backend_start "${@}"
-        ;;
-    start-controller )
-        fatc_controller_start "${@}"
         ;;
     start-daemon-stack )
         fatc_stack_daemon_start "${@}"
@@ -84,11 +84,11 @@ case $ARG in
     start-service-stack )
         fatc_stack_service_start "${@}"
         ;;
+    stop )
+        fatc_stop "${@}"
+        ;;
     stop-backend )
         fatc_backend_stop "${@}"
-        ;;
-    stop-controller )
-        fatc_controller_stop "${@}"
         ;;
     stop-daemon-stack )
         fatc_stack_daemon_stop "${@}"

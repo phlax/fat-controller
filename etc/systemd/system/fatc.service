@@ -4,8 +4,8 @@ Requires=configuration.service idle.timer
 After=configuration.service idle.timer
 
 [Service]
-ExecStart=/usr/bin/fatctl start-controller
-ExecStop=/usr/bin/fatctl stop-controller
+ExecStart=/usr/bin/fatctl start
+ExecStop=/usr/bin/fatctl stop
 PrivateTmp=true
 RemainAfterExit=true
 TimeoutStopSec=infinity

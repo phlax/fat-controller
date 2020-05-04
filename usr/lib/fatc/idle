@@ -9,7 +9,7 @@ fatc_idle_check_service () {
     timestamp=$(date +"%s")
     idle_fun="$2"
     last_activity="$3"
-    export service="controller.service.${service_name}"
+    export service="fatc.service.${service_name}"
     if [ -n "$last_activity" ]; then
 	idle=$(echo "$timestamp - $last_activity" | bc)
 	if [ "$idle" -lt "$FATC_TIMEOUT_IDLE" ]; then

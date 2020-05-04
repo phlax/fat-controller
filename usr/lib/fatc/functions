@@ -2,7 +2,7 @@
 
 
 . /usr/lib/fatc/common
-. /usr/lib/fatc/controller
+. /usr/lib/fatc/fatc
 . /usr/lib/fatc/configure
 . /usr/lib/fatc/stack
 . /usr/lib/fatc/idle
