@@ -4,7 +4,7 @@
 
 
 fatc_configure_proxy_socket () {
-    PROXY_SOCKET="${SYSTEMD_DIR}/controller.${1}.${2}.${3}--proxy.socket"
+    PROXY_SOCKET="${FATC_SYSTEMD}/controller.${1}.${2}.${3}--proxy.socket"
     cat > "$PROXY_SOCKET" <<EOF
 [Socket]
 ListenStream=$4
@@ -15,7 +15,7 @@ EOF
 
 
 fatc_configure_proxy_service () {
-    PROXY_SERVICE="${SYSTEMD_DIR}/controller.${1}.${2}.${3}--proxy.service"
+    PROXY_SERVICE="${FATC_SYSTEMD}/controller.${1}.${2}.${3}--proxy.service"
     cat > "$PROXY_SERVICE" <<EOF
 [Unit]
 Description=Proxy $1 service: $2.$3
@@ -29,7 +29,7 @@ EOF
 
 
 fatc_configure_isolated_daemon () {
-    SERVICE="${SYSTEMD_DIR}/controller.daemon.${1}.service"
+    SERVICE="${FATC_SYSTEMD}/controller.daemon.${1}.service"
     cat > "$SERVICE" <<EOF
 [Unit]
 Description=Daemon service: $1
@@ -41,16 +41,16 @@ WantedBy=controller.target
 [Service]
 ExecStart=/usr/bin/fatctl start-daemon-stack $1
 ExecStop=/usr/bin/fatctl stop-daemon-stack $1
-PassEnvironment=DAEMONS_DIR
-PassEnvironment=DAEMONS_SOCKET_DIR
-PassEnvironment=CONTROLLER_COMPOSE
+PassEnvironment=FATC_DAEMONS
+PassEnvironment=FATC_DAEMONS_SOCKETS
+PassEnvironment=FATC_COMPOSE
 RemainAfterExit=true
 EOF
 }
 
 
 fatc_configure_daemon_service () {
-    SERVICE="${SYSTEMD_DIR}/controller.daemon.${1}.${2}.service"
+    SERVICE="${FATC_SYSTEMD}/controller.daemon.${1}.${2}.service"
     cat > "$SERVICE" <<EOF
 [Unit]
 Description=Daemon service: $1.$2
@@ -62,17 +62,17 @@ WantedBy=controller.target
 ExecStart=/usr/bin/fatctl start-daemon-stack $1 $2 $5
 ExecStartPost=/usr/bin/fatctl wait-daemon-stack 0.5 $1 $2 "$3" $4
 ExecStop=/usr/bin/fatctl stop-daemon-stack $1 $2 $5
-PassEnvironment=DAEMONS_DIR
-PassEnvironment=DAEMONS_SOCKET_DIR
-PassEnvironment=CONTROLLER_COMPOSE
-PassEnvironment=SOCKET_TIMEOUT
+PassEnvironment=FATC_DAEMONS
+PassEnvironment=FATC_DAEMONS_SOCKETS
+PassEnvironment=FATC_COMPOSE
+PassEnvironment=FATC_TIMEOUT_SOCKETS
 RemainAfterExit=true
 EOF
 }
 
 
 fatc_configure_service_service () {
-    SERVICE="${SYSTEMD_DIR}/controller.service.${1}.${2}.service"
+    SERVICE="${FATC_SYSTEMD}/controller.service.${1}.${2}.service"
     cat > "$SERVICE" <<EOF
 [Unit]
 Description=Service service: $1.$2
@@ -84,20 +84,20 @@ WantedBy=controller.target
 ExecStart=/usr/bin/fatctl start-service-stack $1 $2 $5
 ExecStartPost=/usr/bin/fatctl wait-service-stack 0.5 $1 $2 "$3" $4
 ExecStop=/usr/bin/fatctl stop-service-stack $1 $2 $5
-PassEnvironment=SERVICES_DIR
-PassEnvironment=SERVICES_SOCKET_DIR
-PassEnvironment=CONTROLLER_COMPOSE
-PassEnvironment=USE_CRIU
-PassEnvironment=CRIU_DIR
-PassEnvironment=CONTAINERS_DIR
-PassEnvironment=SOCKET_TIMEOUT
+PassEnvironment=FATC_SERVICES
+PassEnvironment=FATC_SERVICES_SOCKETS
+PassEnvironment=FATC_COMPOSE
+PassEnvironment=FATC_USE_CRIU
+PassEnvironment=FATC_CRIU
+PassEnvironment=FATC_CONTAINERS
+PassEnvironment=FATC_TIMEOUT_SOCKETS
 RemainAfterExit=true
 EOF
 }
 
 
 fatc_configure_backend () {
-    SERVICE="${SYSTEMD_DIR}/controller.service.${1}.${2}.service"
+    SERVICE="${FATC_SYSTEMD}/controller.service.${1}.${2}.service"
     cat > "$SERVICE" <<EOF
 [Unit]
 Description=Service service: $1.$2
@@ -107,9 +107,9 @@ WantedBy=controller.target
 ExecStart=/usr/bin/fatctl start-backend $1.$2
 ExecStartPost=/usr/bin/fatctl wait-backend 0.5 $1 $2 "$3" $4
 ExecStop=/usr/bin/fatctl stop-backend $1.$2
-PassEnvironment=SERVICES_DIR
-PassEnvironment=SERVICES_SOCKET_DIR
-PassEnvironment=SOCKET_TIMEOUT
+PassEnvironment=FATC_SERVICES
+PassEnvironment=FATC_SERVICES_SOCKETS
+PassEnvironment=FATC_TIMEOUT_SOCKETS
 RemainAfterExit=true
 EOF
 }
@@ -124,14 +124,14 @@ fatc_configure_service_idle () {
     export COMPOSE
     fun=$(echo "$idle_fun" | envsubst '${COMPOSE}')
     service=$(echo '{}' | jq -cr --arg idle "$fun" '.idle = $idle')
-    if [ ! -f "$SERVICES_IDLE" ]; then
-	mkdir -p "$(dirname "$SERVICES_IDLE")"
-	echo "{}" > "$SERVICES_IDLE"
+    if [ ! -f "$FATC_IDLE" ]; then
+	mkdir -p "$(dirname "$FATC_IDLE")"
+	echo "{}" > "$FATC_IDLE"
     fi
     jq --arg stack_name "${stack_name}.0" \
        --argjson service "$service" \
-       '.[$stack_name] = $service' "$SERVICES_IDLE" \
-	| sponge "$SERVICES_IDLE"
+       '.[$stack_name] = $service' "$FATC_IDLE" \
+	| sponge "$FATC_IDLE"
 }
 
 

@@ -1,6 +1,27 @@
 #!/bin/bash -e
 
 
+FATC_BIN=${FATC_BIN:-/controller/bin}
+FATC_COMPOSE=${FATC_COMPOSE:-$FATC_BIN/docker-compose}
+FATC_RUN=${FATC_RUN:-/var/run/controller}
+FATC_LIB=${FATC_LIB:-/var/lib/controller}
+FATC_SOCKETS=${FATC_SOCKETS:-$FATC_RUN/sockets}
+FATC_SYSTEMD=${FATC_SYSTEMD:-/etc/systemd/system}
+
+FATC_PROXY_SOCKETS=${FATC_PROXY_SOCKETS=-$FATC_SOCKETS/fc}
+FATC_DAEMONS=${FATC_DAEMONS:-$FATC_LIB/daemons}
+FATC_DAEMONS_SOCKETS=${FATC_DAEMONS_SOCKETS:-$FATC_SOCKETS/daemons}
+FATC_SERVICES=${FATC_SERVICES:-$FATC_LIB/services}
+FATC_SERVICES_SOCKETS=${FATC_SERVICES_SOCKETS:-$FATC_SOCKETS/services}
+FATC_IDLE=${FATC_IDLE:-$FATC_RUN/idle/services}
+FATC_USE_CRIU=${FATC_USE_CRIU:-true}
+FATC_CRIU=${FATC_CRIU:-$FATC_LIB/criu}
+FATC_CONTAINERS=${FATC_CONTAINERS:-$FATC_LIB/containers}
+
+FATC_TIMEOUT_SOCKETS=${FATC_TIMEOUT_SOCKETS:-120}
+FATC_TIMEOUT_IDLE=${FATC_TIMEOUT_IDLE:-50}
+
+
 fatc_active () {
     local stack_type
     stack_type=$1
@@ -16,7 +37,7 @@ fatc_active () {
 
 
 fatc_backend_resolve () {
-    cat /var/lib/controller/backend
+    cat "$FATC_LIB/backend"
 }
 
 
@@ -43,7 +64,7 @@ fatc_get_listen_socket () {
     local index stack_name
     stack_name="$1"
     index="$2"
-    echo "$CONTROLLER_SOCKETS_DIR/$stack_name.$index.sock"
+    echo "$FATC_PROXY_SOCKETS/$stack_name.$index.sock"
 }
 
 
@@ -51,9 +72,9 @@ fatc_get_sockets_dir () {
     local stack_type
     stack_type="$1"
     if [ "$stack_type" = "service" ]; then
-	echo "$SERVICES_SOCKET_DIR"
+	echo "$FATC_SERVICES_SOCKETS"
     else
-	echo "$DAEMONS_SOCKET_DIR"
+	echo "$FATC_DAEMONS_SOCKETS"
     fi
 }
 
@@ -71,11 +92,10 @@ fatc_get_stack_dir () {
     local stack_type
     stack_type="$1"
     if [ "$stack_type" = "service" ]; then
-	echo "$SERVICES_DIR"
+	echo "$FATC_SERVICES"
     else
-	echo "$DAEMONS_DIR"
+	echo "$FATC_DAEMONS"
     fi
-
 }
 
 
@@ -85,7 +105,7 @@ fatc_get_stack_services () {
     stack_name="$2"
     dir=$(fatc_get_stack_dir "$stack_type")
     cd "${dir}/${stack_name}"
-    $CONTROLLER_COMPOSE config --services | tr '\r\n' ' '
+    $FATC_COMPOSE config --services | tr '\r\n' ' '
 }
 
 
@@ -103,7 +123,7 @@ fatc_get_stack_compose_command () {
     stack_type="$1"
     stack_name="$2"
     compose=$(fatc_get_stack_compose "$stack_type" "$stack_name")
-    echo "${CONTROLLER_COMPOSE} \
+    echo "${FATC_COMPOSE} \
               -p ${stack_type}_${stack_name} \
               -f ${compose} \
               --skip-hostname-check \
@@ -162,7 +182,7 @@ fatc_get_service_idle () {
 	echo "$timestamp - $updated_last_activity" | bc
     else
 	fatc_log_warn "Last activity function (${service}:${idle_fun}) did not return a valid number"
-	echo "$SERVICES_IDLE_TIMEOUT + 1" | bc
+	echo "$FATC_TIMEOUT_IDLE + 1" | bc
     fi
 }
 

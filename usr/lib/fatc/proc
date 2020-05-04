@@ -7,13 +7,13 @@
 function fatc_stack_service_stop () {
     local compose compose_file
     services=${3:1:-1}
-    if [[ -n "$USE_CRIU" && "$USE_CRIU" != "false" ]]; then
+    if [[ -n "$FATC_USE_CRIU" && "$FATC_USE_CRIU" != "false" ]]; then
 	if [[ -n "$3" && "$3" != "false" ]]; then
 	    fatc_stack_checkpoint "service_$1" "$3"
 	fi
     fi
-    compose_file=$SERVICES_DIR/$1/docker-compose.yml
-    compose="$CONTROLLER_COMPOSE \
+    compose_file=$FATC_SERVICES/$1/docker-compose.yml
+    compose="$FATC_COMPOSE \
 	   	    -p service_$1 \
 		    -f $compose_file \
 		    --skip-hostname-check \
@@ -27,7 +27,7 @@ function fatc_stack_service_stop () {
 
 function fatc_stack_service_check_socket_status () {
     local socket
-    socket=$SERVICES_SOCKET_DIR/$1/service.$2.sock
+    socket=$FATC_SERVICES_SOCKETS/$1/service.$2.sock
     if [ -S "$socket" ]; then
 	fatc_log_warn "Removing stale socket: $socket"
         rm "$socket"
@@ -40,8 +40,8 @@ fatc_stack_restore () {
     for container in ${services//,/ } ; do
 	container_name="${1}_${container}_1"
 	# container_id=$(docker container inspect --format "{{.ID}}" "$container_name")
-	checkpoint_dir="$CRIU_DIR/$container_name"
-	# container_dir="$CONTAINERS_DIR/$container_id"
+	checkpoint_dir="$FATC_CRIU/$container_name"
+	# container_dir="$FATC_CONTAINERS/$container_id"
 	if [ -d "$checkpoint_dir" ]; then
 	    # mv $checkpoint_dir/* $container_dir/checkpoints 2>/dev/null || true
 	    echo "Attempting to restore from checkpoint"
@@ -73,13 +73,13 @@ fatc_stack_checkpoint () {
 function fatc_stack_service_start () {
     local compose compose_file
     fatc_stack_service_check_socket_status "$1" "$2"
-    compose_file=$SERVICES_DIR/$1/docker-compose.yml
-    compose="$CONTROLLER_COMPOSE \
+    compose_file=$FATC_SERVICES/$1/docker-compose.yml
+    compose="$FATC_COMPOSE \
 	   	    -p service_$1 \
 		    -f $compose_file \
 		    --skip-hostname-check \
 		    --no-ansi"
-    if [[ -n "$USE_CRIU" && "$USE_CRIU" != "false" ]]; then
+    if [[ -n "$FATC_USE_CRIU" && "$FATC_USE_CRIU" != "false" ]]; then
 	if [[ -n "$3" && "$3" != "false" ]]; then
 	    $compose up --no-start
 	    fatc_stack_restore "service_$1" "$3"
@@ -93,7 +93,7 @@ function fatc_stack_service_start () {
 function fatc_stack_daemon_clear_socket () {
     local socket
     # TODO: use proper index ?
-    socket="${DAEMONS_SOCKET_DIR}/${1}/daemon.0.sock"
+    socket="${FATC_DAEMONS_SOCKETS}/${1}/daemon.0.sock"
     if [ -S "$socket" ]; then
 	fatc_log_warn "Removing stale socket: $socket"
         rm "$socket"
@@ -104,8 +104,8 @@ function fatc_stack_daemon_clear_socket () {
 function fatc_stack_daemon_start () {
     local compose compose_file
     fatc_stack_daemon_clear_socket "$1"
-    compose_file=$DAEMONS_DIR/$1/docker-compose.yml
-    compose="$CONTROLLER_COMPOSE \
+    compose_file=$FATC_DAEMONS/$1/docker-compose.yml
+    compose="$FATC_COMPOSE \
 	   	    -p daemon_$1 \
 		    -f $compose_file \
 		    --skip-hostname-check \
@@ -116,8 +116,8 @@ function fatc_stack_daemon_start () {
 
 
 function fatc_stack_daemon_stop () {
-    DC_FILE="/var/lib/controller/daemons/${1}/docker-compose.yml"
-    DC="/controller/bin/docker-compose -p daemon_${1} -f ${DC_FILE} --skip-hostname-check --no-ansi"
+    DC_FILE="$FATC_DAEMONS/${1}/docker-compose.yml"
+    DC="$FATC_COMPOSE -p daemon_${1} -f ${DC_FILE} --skip-hostname-check --no-ansi"
     $DC down
     fatc_log "Daemon stack stopped $1"
 }
@@ -147,7 +147,7 @@ fatc_stack_service_wait () {
 	sleep "$1"
 	now=$(date +%s)
 	taken=$(echo "$now - $START" | bc)
-	if [[ "$taken" -gt "$SOCKET_TIMEOUT" ]]; then
+	if [[ "$taken" -gt "$FATC_TIMEOUT_SOCKETS" ]]; then
 	    fatc_log_err "Timed out waiting for service: $3"
 	    exit 1
 	fi
@@ -179,7 +179,7 @@ fatc_stack_daemon_wait () {
 	sleep "$1"
 	now=$(date +%s)
 	taken=$(echo "$now - $START" | bc)
-	if [[ "$taken" -gt "$SOCKET_TIMEOUT" ]]; then
+	if [[ "$taken" -gt "$FATC_TIMEOUT_SOCKETS" ]]; then
 	    fatc_log_err "Timed out waiting for daemon: $3"
 	    exit 1
 	fi

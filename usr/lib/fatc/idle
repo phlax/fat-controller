@@ -12,13 +12,13 @@ fatc_idle_check_service () {
     export service="controller.service.${service_name}"
     if [ -n "$last_activity" ]; then
 	idle=$(echo "$timestamp - $last_activity" | bc)
-	if [ "$idle" -lt "$SERVICES_IDLE_TIMEOUT" ]; then
+	if [ "$idle" -lt "$FATC_TIMEOUT_IDLE" ]; then
 	    # if we know service has been *active* for less time than
 	    # the timeout then bail
 	    return
 	fi
     fi
-    if [ "$(fatc_service_uptime "$service")" -lt "$SERVICES_IDLE_TIMEOUT" ]; then
+    if [ "$(fatc_service_uptime "$service")" -lt "$FATC_TIMEOUT_IDLE" ]; then
 	return
     fi
     unset fatc_idle_check
@@ -27,28 +27,28 @@ fatc_idle_check_service () {
     idle=$(fatc_get_service_idle "$service" "$idle_fun")
     # kill the service if necessary and remove the last_activity field
     # otherwise update last_activity if necessary
-    if [ "$idle" -gt "$SERVICES_IDLE_TIMEOUT" ]; then
+    if [ "$idle" -gt "$FATC_TIMEOUT_IDLE" ]; then
 	jq --arg service_name "${service_name}" \
-	   'del(.[$service_name].last_activity)' "$SERVICES_IDLE" \
-	    | sponge "$SERVICES_IDLE"
+	   'del(.[$service_name].last_activity)' "$FATC_IDLE" \
+	    | sponge "$FATC_IDLE"
 	systemctl stop "$service"
 	fatc_log "Stopped idle service ($service_name), idle: $idle"
     elif [[ -n "$idle" ]]; then
 	updated_last_activity=$(echo "$timestamp - $idle" | bc)
 	jq --arg service "${service_name}" \
 	   --arg last_activity  "$updated_last_activity" \
-	   '.[$service].last_activity = $last_activity' "$SERVICES_IDLE" \
-	    | sponge "$SERVICES_IDLE"
+	   '.[$service].last_activity = $last_activity' "$FATC_IDLE" \
+	    | sponge "$FATC_IDLE"
     fi
 }
 
 
 fatc_idle_services () {
-    if [ ! -f "$SERVICES_IDLE" ]; then
+    if [ ! -f "$FATC_IDLE" ]; then
 	fatc_log_warn "No idle services configured, nothing will be stopped!"
 	exit 1
     fi
-    jq -cr '. // {} | @base64' "$SERVICES_IDLE"
+    jq -cr '. // {} | @base64' "$FATC_IDLE"
 }
 
 

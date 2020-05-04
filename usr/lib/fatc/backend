@@ -37,7 +37,7 @@ fatc_backend_wait () {
 	sleep "$step"
 	now=$(date +%s)
 	taken=$(echo "$now - $start" | bc)
-	if [[ "$taken" -gt "$SOCKET_TIMEOUT" ]]; then
+	if [[ "$taken" -gt "$FATC_TIMEOUT_SOCKETS" ]]; then
 	    fatc_log_err "Timed out waiting for backend: $cmd"
 	    exit 1
 	fi

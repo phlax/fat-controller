@@ -15,8 +15,8 @@ stackctl_stack () {
     local stack_type=$1 \
 	  stack_name=$2
     shift 2
-    cd "/var/lib/controller/${stack_type}s/${stack_name}"
-    /controller/bin/docker-compose -p "${stack_type}_${stack_name}" "${@}"
+    cd "${FATC_LIB}/${stack_type}s/${stack_name}"
+    $FATC_COMPOSE -p "${stack_type}_${stack_name}" "${@}"
 }
 
 
