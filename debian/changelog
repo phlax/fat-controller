@@ -1,4 +1,12 @@
-fatc (0.0.2) UNRELEASED; urgency=medium
+fatc (0.0.3) UNRELEASED; urgency=medium
+
+  * Update rationalize docker ARGs
+  * Update namespace env vars
+  * Update add usage to fatctl
+
+ -- Ryan Northey <ryan@synca.io>  Mon, 04 May 2020 05:21:53 +0100
+
+fatc (0.0.2) buster; urgency=medium
 
   * Fix dont set docker/daemon.json, edit it
 
