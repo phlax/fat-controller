@@ -23,8 +23,7 @@ stackctl_stack () {
 stackctl_system () {
     local cmd=$1 \
 	  stack_type=$1 \
-	  stack_name=$2 \
-
+	  stack_name=$2
     shift 3
     systemctl "$cmd" "fatc.${stack_type}.${stack_name}" "${@}"
 }
