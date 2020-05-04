@@ -25,6 +25,7 @@ $FC_EXEC ls /etc/systemd/system | grep idle
 
 ## services
 $FC_EXEC ls /etc/systemd/system | grep '^controller\.service' | tr '\n\r' '\n' | grep "\.service$" | grep -v "^controller\.service$" | grep -v "\-\-proxy"
+$FC_EXEC fatctl list-services | grep service
 
 ## service proxies
 $FC_EXEC ls /etc/systemd/system | grep '^controller\.service' | tr '\n\r' '\n' | grep "\.service$" | grep -v "^controller\.service$" | grep "\-\-proxy.service$"
@@ -34,6 +35,7 @@ $FC_EXEC ls /etc/systemd/system | grep '^controller\.service' | tr '\n\r' '\n' |
 
 ## daemons
 $FC_EXEC ls /etc/systemd/system | grep '^controller\.daemon' | tr '\n\r' '\n' | grep "\.service$" | grep -v "\-\-proxy"
+$FC_EXEC fatctl list-daemons | grep daemon
 
 ## daemon proxies
 $FC_EXEC ls /etc/systemd/system | grep '^controller\.daemon' | tr '\n\r' '\n' | grep "\.service$" | grep "\-\-proxy.service$"
