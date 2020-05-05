@@ -22,18 +22,19 @@ usage () {
     list-services           List configured services
 
 
-    Internal commands, used in systemd units:
+    Internal commands, used in systemd units or for installation:
 
+    install                 Install docker-compose environment and other setup ?
     configure               Configure systemd units from fatctl config
     resolve                 Resolve the IP for a container service
 
-    start		    Start fatc
+    start                   Start fatc
     start-backend           Start backend track
     start-daemon-stack      Start daemon's container stack
     start-proxy             Start proxy track
     start-service-stack     Start service's container stack
 
-    stop		    Stop fatc
+    stop                    Stop fatc
     stop-backend            Stop backend track
     stop-daemon-stack       Stop daemon's container stack
     stop-idle               Stop idle services
@@ -57,6 +58,13 @@ case $ARG in
         ;;
     s | service )
         stackctl service "${@}"
+        ;;
+    install )
+        fatc_create_user
+        fatc_edit_docker_config
+        fatc_create_docker_env
+        systemctl enable fatc
+        # chown 1000:1000 /etc/systemd/system
         ;;
     list-daemons )
         fatc_list_daemons
