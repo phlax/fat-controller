@@ -157,7 +157,7 @@ fatc_log_err () {
 
 
 fatc_ls_dirs () {
-    find "$1" -maxdepth 1 -name '*' -type d -printf '%f\n'
+    find "$1" -maxdepth 1 -mindepth 1 -name '*' -type d -printf '%f\n'
 }
 
 
