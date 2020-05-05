@@ -180,10 +180,8 @@ fatc_configure_track () {
 	result+=("${stack_type}.${stack_name}.${index}: <- $listen")
     fi
     if [ -f "$compose" ]; then
-	if [ "$index" = 0 ]; then
-	    fatc_configure_"$stack_type"_service "$stack_name" "$index" "$healthy" "$upstream" "$use_criu" "$depends"
-	    systemctl enable "fatc.${stack_type}.${stack_name}.${index}"
-	fi
+	fatc_configure_"$stack_type"_service "$stack_name" "$index" "$healthy" "$upstream" "$use_criu" "$depends"
+	systemctl enable "fatc.${stack_type}.${stack_name}.${index}"
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
 	fatc_configure_update_services "$stack_type" "$stack_name" "$index" "$listen" "$upstream" "$services"
 	result+=("${stack_type}.${stack_name}.${index}: -> docker: $upstream (${services%%*( )})")
