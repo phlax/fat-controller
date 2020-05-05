@@ -4,10 +4,17 @@
 
 
 fatc_configure_proxy_socket () {
+    local listen
+    protocol=ListenStream
+    listen="$4"
+    if [ "${listen: -4}" = "/udp" ]; then
+	protocol=ListenDatagram
+	listen="${listen::-4}"
+    fi
     PROXY_SOCKET="${FATC_SYSTEMD}/fatc.${1}.${2}.${3}--proxy.socket"
     cat > "$PROXY_SOCKET" <<EOF
 [Socket]
-ListenStream=$4
+$protocol=$listen
 [Install]
 WantedBy=sockets.target
 EOF
