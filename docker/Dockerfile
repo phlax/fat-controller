@@ -28,6 +28,7 @@ RUN apt update \
 
 ARG FATC_SYSTEMD=/etc/systemd/system
 
+ARG FATC_USER=fatc
 ARG FATC_RUN=/var/run/fatc
 ARG FATC_LIB=/var/lib/fatc
 ARG FATC_BIN=$FATC_LIB/bin

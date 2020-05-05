@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-
+FATC_USER=${FATC_USER:-fatc}
 FATC_RUN=${FATC_RUN:-/var/run/fatc}
 FATC_LIB=${FATC_LIB:-/var/lib/fatc}
 FATC_BIN=${FATC_BIN:-$FATC_LIB/bin}
@@ -213,14 +213,14 @@ fatc_stack_resolve () {
 
 
 fatc_create_user () {
-    if id fatc > /dev/null 2>&1; then
-	dc_log_warn "User (fatc) already exists"
+    if id "$FATC_USER" > /dev/null 2>&1; then
+	dc_log_warn "User ($FATC_USER) already exists"
 	return
     fi
     adduser \
 	--group \
-	--home /var/lib/fatc \
+	--home "$FATC_LIB" \
 	--system \
-        fatc
-    gpasswd -a fatc docker
+        "$FATC_USER"
+    gpasswd -a "$FATC_USER" docker
 }
