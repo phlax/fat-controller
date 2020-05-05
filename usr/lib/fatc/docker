@@ -10,7 +10,7 @@ fatc_edit_docker_config () {
     else
 	jq '.experimental = true' /etc/docker/daemon.json \
 	    | sponge /etc/docker/daemon.json
-	jq '.storage-driver = "overlay2"' /etc/docker/daemon.json \
+	jq '.["storage-driver"] = "overlay2"' /etc/docker/daemon.json \
 	    | sponge /etc/docker/daemon.json
     fi
     if systemctl is-system-running; then
