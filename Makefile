@@ -13,30 +13,10 @@ deb:
 image: deb
 	mkdir build -p
 	chmod 777 build
-	source .docker-app \
-	   && if [ -f .env ]; then source .env; fi \
-	   && if [ ! -z "$$BUILD_FROM" ]; then docker pull $$BUILD_FROM; fi \
-	   && docker build \
-	         -t fc-temp \
-		 --build-arg APP_NAME="$$APP_NAME" \
-		 --build-arg APP_USERNAME="$$APP_USERNAME" \
-		 --build-arg BUILD_IMAGE="$$BUILD_IMAGE" \
-		 --build-arg BUILD_FROM="$$BUILD_FROM" \
-		 --build-arg APP_DIR="$$APP_DIR" \
-		 --build-arg DEB_REPOS="$$DEB_REPOS" \
-		 --build-arg GPG_KEYS="$$GPG_KEYS" \
-		 --build-arg EGGS="$$EGGS" \
-		 --build-arg BUILD_PKGS="$$BUILD_PKGS" \
-		 --build-arg SYSTEM_PKGS="$$SYSTEM_PKGS" \
-		 --build-arg APP_CONFIG="$$APP_CONFIG" \
-		$$BUILD_CONTEXT \
-	   && docker build -t $$BUILD_IMAGE docker \
-	   && docker rmi fc-temp
+	docker build -t phlax/fatc docker
 
 hub-image:
-	source .docker-app \
-	   && if [ -f .env ]; then source .env; fi \
-	   && docker push $$BUILD_IMAGE
+	docker push phlax/fatc
 
 pysh:
 	pip install -U pip setuptools termcolor

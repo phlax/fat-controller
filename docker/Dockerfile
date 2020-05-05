@@ -1,16 +1,8 @@
 # phlax/fatc
 #
-# requires intermediate image to be built before
-# this image can be built
-# running:
-#
-#  > make image
-#
-# in parent folder will build this recipe
-#
 # VERSION       0.0.1
 
-ARG BUILD_FROM=fc-temp
+ARG BUILD_FROM=phlax/systemd
 
 # Root stage
 FROM $BUILD_FROM
@@ -19,11 +11,18 @@ MAINTAINER Ryan Northey <ryan@synca.io>
 
 COPY dist /tmp/dist
 
+
 RUN apt update \
-	&& APT="apt install -y -qq \
-        	--no-install-recommends \
-         	--no-install-suggests" \
-	&& $APT /tmp/dist/fatc_*deb \
+	&& APT_INSTALL="apt install -y -qq \
+         	--no-install-recommends" \
+	&& $APT_INSTALL software-properties-common gpg gpg-agent wget \
+	&& wget -qO - https://download.docker.com/linux/debian/gpg | apt-key add - \
+        && wget -qO - https://phlax.github.io/debian/gpg | apt-key add - \
+	&& apt-add-repository "deb [arch=amd64] https://download.docker.com/linux/debian buster stable" \
+	&& apt-add-repository "deb [arch=amd64] https://phlax.github.io/debian buster main" \
+	&& apt update \
+        && apt dist-upgrade -y -qq \
+	&& $APT_INSTALL /tmp/dist/fatc_*deb \
 	&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
 	&& apt-get clean
 
