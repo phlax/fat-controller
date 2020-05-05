@@ -1,4 +1,10 @@
-fatc (0.0.6) UNRELEASED; urgency=medium
+fatc (0.0.7) UNRELEASED; urgency=medium
+
+  * Small lib fixes
+
+ -- Ryan Northey <ryan@synca.io>  Tue, 05 May 2020 13:13:34 +0100
+
+fatc (0.0.6) buster; urgency=medium
 
   * Add installation - virtualenv, docker-compose
   * Small fix stack status command
