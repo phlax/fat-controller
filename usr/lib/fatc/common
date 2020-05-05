@@ -51,10 +51,15 @@ fatc_get_last_activity () {
     COMPOSE=$(fatc_get_stack_compose_command service "$stack_name")
     export COMPOSE="$COMPOSE"
     export SERVICE="$service"
-    unset fatc_get_last_activity
-    unset fatc_get_stack_dir
-    unset fatc_get_stack_compose
-    unset fatc_get_stack_compose_command
+    unset -f \
+	  fatc_get_last_activity \
+	  fatc_get_stack_dir \
+	  fatc_get_stack_compose \
+	  fatc_get_stack_compose_command
+    unset \
+	FATC_DAEMONS \
+	FATC_SERVICES \
+	FATC_SYSTEMD
     cd "${stack_dir}"
     exec "$idle_fun"
 }
@@ -176,7 +181,7 @@ fatc_get_service_idle () {
     service="$1"
     idle_fun="$2"
     timestamp=$(date +"%s")
-    unset fatc_get_service_idle
+    unset -f fatc_get_service_idle
     updated_last_activity=$(fatc_get_last_activity "$service" "$idle_fun")
     if [ -n "$updated_last_activity" ]; then
 	echo "$timestamp - $updated_last_activity" | bc

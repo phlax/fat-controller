@@ -363,6 +363,10 @@ fatc_configure () {
     export -f fatc_get_sockets_dir
     export -f fatc_get_upstream_socket
 
+    export FATC_SYSTEMD
+    export FATC_DAEMONS
+    export FATC_SERVICES
+
     fatc_configure_parallel configure daemon
     fatc_configure_parallel configure service
     fatc_configure_parallel configure_start service
