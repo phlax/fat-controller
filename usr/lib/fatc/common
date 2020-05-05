@@ -1,10 +1,10 @@
 #!/bin/bash -e
 
 
-FATC_BIN=${FATC_BIN:-/fatc/bin}
-FATC_COMPOSE=${FATC_COMPOSE:-$FATC_BIN/docker-compose}
 FATC_RUN=${FATC_RUN:-/var/run/fatc}
 FATC_LIB=${FATC_LIB:-/var/lib/fatc}
+FATC_BIN=${FATC_BIN:-$FATC_LIB/bin}
+FATC_COMPOSE=${FATC_COMPOSE:-$FATC_BIN/docker-compose}
 FATC_SOCKETS=${FATC_SOCKETS:-$FATC_RUN/sockets}
 FATC_SYSTEMD=${FATC_SYSTEMD:-/etc/systemd/system}
 
@@ -209,4 +209,18 @@ fatc_stack_resolve () {
     if [ -n "$address" ]; then
 	echo "$address" | cut -d/ -f1
     fi
+}
+
+
+fatc_create_user () {
+    if id fatc > /dev/null 2>&1; then
+	dc_log_warn "User (fatc) already exists"
+	return
+    fi
+    adduser \
+	--group \
+	--home /var/lib/fatc \
+	--system \
+        fatc
+    gpasswd -a fatc docker
 }
