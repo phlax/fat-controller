@@ -37,6 +37,9 @@ services:
       # systemd requirement
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
 
+      # fatc configuration
+      - ${PWD}/example/etc/config.json:/etc/fatc/config.json
+
       # the easiest config for sockets is using a real file path
       # preferably one mounted on tmpfs
       # - /var/run/fatc/sockets:/var/run/fatc/sockets
