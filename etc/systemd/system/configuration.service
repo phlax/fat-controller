@@ -11,6 +11,7 @@ PassEnvironment=FATC_SYSTEMD
 PassEnvironment=FATC_COMPOSE
 PassEnvironment=FATC_PROXY_SOCKETS
 PassEnvironment=FATC_TIMEOUT_SOCKETS
+PassEnvironment=FATC_CONFIG
 PassEnvironment=FATC_DAEMONS
 PassEnvironment=FATC_DAEMONS_SOCKETS
 PassEnvironment=FATC_SERVICES

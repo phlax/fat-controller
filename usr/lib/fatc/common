@@ -1,5 +1,6 @@
 #!/bin/bash -e
 
+FATC_CONFIG=${FATC_CONFIG:-/etc/fatc/config.json}
 FATC_USER=${FATC_USER:-fatc}
 FATC_RUN=${FATC_RUN:-/var/run/fatc}
 FATC_LIB=${FATC_LIB:-/var/lib/fatc}
@@ -57,6 +58,7 @@ fatc_get_last_activity () {
 	  fatc_get_stack_compose \
 	  fatc_get_stack_compose_command
     unset \
+	FATC_CONFIG \
 	FATC_DAEMONS \
 	FATC_SERVICES \
 	FATC_SYSTEMD
@@ -81,15 +83,6 @@ fatc_get_sockets_dir () {
     else
 	echo "$FATC_DAEMONS_SOCKETS"
     fi
-}
-
-
-fatc_get_stack_config () {
-    local dir stack_type stack_name
-    stack_type="$1"
-    stack_name="$2"
-    dir=$(fatc_get_stack_dir "$stack_type")
-    echo "${dir}/${stack_name}/${stack_type}.json"
 }
 
 
