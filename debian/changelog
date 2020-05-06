@@ -1,4 +1,10 @@
-fatc (0.0.10) UNRELEASED; urgency=medium
+fatc (0.0.11) UNRELEASED; urgency=medium
+
+  * Move configuration to /etc/fatc/config.json
+
+ -- Ryan Northey <ryan@synca.io>  Wed, 06 May 2020 09:26:00 +0100
+
+fatc (0.0.10) buster; urgency=medium
 
   * Add UDP support
 
