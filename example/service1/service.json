@@ -1,9 +1,0 @@
-{
-    "tracks": [
-	{"listen": ":unix:",
-	 "upstream": ":http:80",
-	 "healthy": "curl --output /dev/null --silent --head --fail http://$UPSTREAM"}
-    ],
-    "idle": "./last-activity",
-    "custom-idle": "$COMPOSE exec http /usr/local/bin/last-activity"
-}

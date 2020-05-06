@@ -1,7 +1,0 @@
-{
-    "tracks": [
-	{"listen": "0.0.0.0:8092",
-	 "upstream": ":unix:",
-	 "healthy": "curl --output /dev/null --silent --head --fail --unix-socket $UPSTREAM http://localhost/"}
-    ]
-}

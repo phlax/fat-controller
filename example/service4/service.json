@@ -1,7 +1,0 @@
-{
-    "tracks": [
-	{"listen": ":unix:",
-	 "upstream": ":backend:50001",
-	 "healthy": "curl --output /dev/null --silent --head --fail http://$UPSTREAM"}
-    ]
-}

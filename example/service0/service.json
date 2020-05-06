@@ -1,9 +1,0 @@
-{
-    "tracks": [
-	{"listen": ":unix:",
-	 "upstream": ":unix:",
-	 "healthy": "curl --output /dev/null --silent --head --fail --unix-socket $UPSTREAM http://localhost"}
-    ],
-    "use_criu": ["http", "redis"],
-    "idle": "./last-activity"
-}
