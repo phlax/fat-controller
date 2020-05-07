@@ -64,6 +64,6 @@ $D3_COMPOSE logs http | grep GET
 ### Daemon 4
 
 ## isolated daemon4 is running
-$D4_STATUS -p ActiveState | grep active
+$D4_STATUS -p ActiveState | grep -v inactive | grep active
 
 docker-compose down
