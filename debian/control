@@ -10,6 +10,6 @@ Package: fatc
 Section: devel
 Priority: optional
 Architecture: all
-Depends: bc, criu, curl, dateutils, docker-ce, docker-triggers, gettext-base, git, iproute2, iputils-ping, jq, moreutils, net-tools, virtualenv
+Depends: bc, criu, curl, dateutils, docker-ce, docker-triggers, gettext-base, git, iproute2, iputils-ping, jq, moreutils, net-tools, python3-venv
 Description: Fat controller elastic socket-activated proxy and container orchestration
  Manage docker daemons and dynamic services
