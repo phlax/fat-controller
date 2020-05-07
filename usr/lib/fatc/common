@@ -201,7 +201,7 @@ fatc_stack_resolve () {
     stack_type="$1"
     stack_name="$2"
     service_name="$3"
-    network=fatc
+    network=fatc_proxy
     container_name="${stack_type}_${stack_name}_${service_name}_1"
     container_id=$(docker ps --no-trunc -q -f "name=$container_name")
     address=$(docker network inspect "$network" | jq -r --arg id "$container_id" '.[].Containers[$id].IPv4Address // empty')
