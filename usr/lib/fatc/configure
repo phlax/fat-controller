@@ -335,9 +335,6 @@ fatc_configure_networks () {
 
 
 fatc_configure () {
-    docker container prune -f && docker network prune -f && docker volume prune -f && docker image prune -f
-    docker network create fatc
-
     export -f fatc_configure_backend
     export -f fatc_configure_composition
     export -f fatc_configure_track
