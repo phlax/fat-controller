@@ -322,13 +322,21 @@ fatc_configure_parallel () {
 
 
 fatc_configure_networks () {
-    local configured network network_name networks
-    networks=$(jq -cr  '.networks // [] | join(" ")' "$FATC_CONFIG")
+    local cmd configured network network_name networks
+    networks=$(jq -cr  '.networks // {} | keys | join(" ")' "$FATC_CONFIG")
     configured=$(docker network ls)
     for network in $networks; do
 	network_name="fatc_${network}"
+	subnet=$(jq -cr --arg network "$network"  '.networks // {} | .[$network].subnet // empty' "$FATC_CONFIG")
+	# not sure if this should cane network and recreate if it exists
+	# to enforce config
 	if ! grep -q "$network_name" <<<"$configured" ; then
-	    docker network create "$network_name"
+	    opts=""
+	    if [ -n "$subnet" ]; then
+		opts=" --subnet=$subnet"
+	    fi
+	    cmd="docker network create $opts $network_name"
+	    $cmd
 	fi
     done
 }
