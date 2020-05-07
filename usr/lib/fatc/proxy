@@ -15,7 +15,7 @@ fatc_proxy_start () {
 	address=$(echo "$upstream" | cut -d: -f2)
 	port=$(echo "$upstream" | cut -d: -f3)
 	until [ -n "$ip" ]; do
-	    ip=$(fatc_stack_resolve "$1" "$2" "$address")
+	    ip=$(fatc_stack_resolve "$address")
 	    if [ -z "$ip" ]; then
 		sleep .5
 	    fi

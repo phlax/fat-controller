@@ -46,7 +46,7 @@ fatc_get_last_activity () {
     local COMPOSE compose_file idle_fun service stack_dir stack_name
     service="$1"
     idle_fun="$2"
-    stack_name="${service_name%.*}"
+    stack_name=$(echo "$service" | cut -d. -f3)
     compose_file=$(fatc_get_stack_compose service "$stack_name")
     stack_dir=$(dirname "$compose_file")
     COMPOSE=$(fatc_get_stack_compose_command service "$stack_name")
@@ -197,17 +197,17 @@ fatc_service_uptime () {
 
 
 fatc_stack_resolve () {
-    local address container_name container_id network service_name stack_name stack_type
-    stack_type="$1"
-    stack_name="$2"
-    service_name="$3"
+    local address name network
+    name="$1"
     network=fatc_proxy
-    container_name="${stack_type}_${stack_name}_${service_name}_1"
-    container_id=$(docker ps --no-trunc -q -f "name=$container_name")
-    address=$(docker network inspect "$network" | jq -r --arg id "$container_id" '.[].Containers[$id].IPv4Address // empty')
-    if [ -n "$address" ]; then
-	echo "$address" | cut -d/ -f1
-    fi
+    containers=$(docker network inspect "$network" | jq -r '.[].Containers[] | values.Name' | tr '\n' ' ')
+    for container in $containers; do
+	address=$(docker container inspect "$container" | jq -cr --arg network "$network" --arg name "$name" '.[].NetworkSettings.Networks[$network] // {} | select(.Aliases[] | match($name)) // {} | .IPAddress // empty')
+	if [ -n "$address" ]; then
+	   echo "$address"
+	   return
+	fi
+    done
 }
 
 
