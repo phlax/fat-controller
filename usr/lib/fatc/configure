@@ -325,6 +325,15 @@ fatc_configure_parallel () {
 }
 
 
+fatc_configure_networks () {
+    local network networks
+    networks=$(jq -cr  '.networks // [] | join(" ")' "$FATC_CONFIG")
+    for network in $networks; do
+	docker network create "fatc_${network}"
+    done
+}
+
+
 fatc_configure () {
     docker container prune -f && docker network prune -f && docker volume prune -f && docker image prune -f
     docker network create fatc
@@ -364,6 +373,7 @@ fatc_configure () {
     export FATC_DAEMONS
     export FATC_SERVICES
 
+    fatc_configure_networks
     fatc_configure_parallel configure daemon
     fatc_configure_parallel configure service
     fatc_configure_parallel configure_start service
