@@ -42,4 +42,9 @@ $FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep '^fatc\.da
 ## daemon sockets
 $FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep '^fatc\.daemon' | tr '\n\r' '\n' | grep "\.socket$"
 
+## networks
+$FC_EXEC docker network ls | grep fatc_network1
+$FC_EXEC docker network ls | grep fatc_network2
+$FC_EXEC docker network ls | grep fatc_other_network
+
 docker-compose down
