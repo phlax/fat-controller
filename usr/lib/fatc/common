@@ -58,6 +58,7 @@ fatc_get_last_activity () {
 	  fatc_get_stack_compose \
 	  fatc_get_stack_compose_command
     unset \
+	FATC_COMPOSE \
 	FATC_CONFIG \
 	FATC_DAEMONS \
 	FATC_SERVICES \

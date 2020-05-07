@@ -326,10 +326,14 @@ fatc_configure_parallel () {
 
 
 fatc_configure_networks () {
-    local network networks
+    local configured network network_name networks
     networks=$(jq -cr  '.networks // [] | join(" ")' "$FATC_CONFIG")
+    configured=$(docker network ls)
     for network in $networks; do
-	docker network create "fatc_${network}"
+	network_name="fatc_${network}"
+	if ! grep -q "$network_name" <<<"$configured" ; then
+	    docker network create "$network_name"
+	fi
     done
 }
 
@@ -368,6 +372,7 @@ fatc_configure () {
     export -f fatc_get_sockets_dir
     export -f fatc_get_upstream_socket
 
+    export FATC_COMPOSE
     export FATC_CONFIG
     export FATC_SYSTEMD
     export FATC_DAEMONS
