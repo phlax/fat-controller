@@ -1,4 +1,13 @@
-fatc (0.0.13) UNRELEASED; urgency=medium
+fatc (0.0.14) UNRELEASED; urgency=medium
+
+  * Fixes for isolated daemons
+  * Minor test fix
+  * Use fatc_proxy network in example/tests
+  * Move container cleanup to fatctl stop unit
+
+ -- Ryan Northey <ryan@synca.io>  Thu, 07 May 2020 17:34:03 +0100
+
+fatc (0.0.13) buster; urgency=medium
 
   * Minor lib fixes
 
