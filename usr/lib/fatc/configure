@@ -36,10 +36,10 @@ EOF
 
 
 fatc_configure_isolated_daemon () {
-    SERVICE="${FATC_SYSTEMD}/fatc.daemon.${1}.service"
+    SERVICE="${FATC_SYSTEMD}/fatc.daemon.${1}.0.service"
     cat > "$SERVICE" <<EOF
 [Unit]
-Description=Daemon service: $1
+Description=Daemon service: $1.0
 Requires=configuration.service $2
 After=configuration.service $2
 
@@ -238,7 +238,7 @@ fatc_configure_composition () {
 	    depends="${depends} fatc.daemon.${dependency}.0.service"
 	done
 	fatc_configure_isolated_daemon "$stack_name" "$depends"
-	systemctl enable "fatc.daemon.${stack_name}"
+	systemctl enable "fatc.daemon.${stack_name}.0"
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
 	fatc_log "daemon.${stack_name}.0: docker: ${services%%*( )}"
     elif [ "$stack_type" = "service" ]; then
@@ -298,16 +298,12 @@ fatc_configure_start_daemon () {
 	    systemctl start "fatc.daemon.${1}.${i}--proxy.socket"
 	    i=$((i + 1))
 	done
-	if [ -f "$compose" ]; then
-	    # this enforces only one composition stack per daemon
-	    # if there are no tracks then the stack doesnt get an index suffix
-	    # if there are its suffixed with `.0`
-	    if [ "$i" = 0 ]; then
-		systemctl start "fatc.daemon.${1}"
-	    else
-		systemctl start "fatc.daemon.${1}.0"
-	    fi
-	fi
+    fi
+    if [ -f "$compose" ]; then
+	# this enforces only one composition stack per daemon
+	# if there are no tracks then the stack doesnt get an index suffix
+	# if there are its suffixed with `.0`
+	systemctl start "fatc.daemon.${1}.0"
     fi
 }
 
