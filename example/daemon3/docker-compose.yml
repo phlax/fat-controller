@@ -11,16 +11,16 @@
 version: "2.4"
 services:
 
-  # ??? the name of this daemon must be unique to the fatc network
-  http:
+  # the name of this process must be unique to the fatc_proxy network
+  http_daemon3:
     image: nginx
+    networks:
+      fatc:
     depends_on:
       - redis
     volumes:
       - /var/lib/fatc/daemons/daemon3/default.conf:/etc/nginx/conf.d/default.conf:ro
       - /var/lib/fatc/daemons/daemon3/index.html:/usr/share/nginx/html/index.html:ro
-    networks:
-      fatc:
 
   redis:
     image: redis

@@ -20,7 +20,8 @@ services:
       - /var/lib/fatc/daemons/daemon1/index.html:/usr/share/nginx/html/index.html:ro
     networks:
       fatc:
-
+        aliases:
+          - http
   redis:
     image: redis
 

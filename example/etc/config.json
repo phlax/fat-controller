@@ -1,7 +1,7 @@
 {
     "networks": {
 	"proxy": {
-	    "subnet": "10.0.0.23/24"
+	    "subnet": "10.0.23.0/24"
 	},
 	"network1": {},
 	"network2": {},
@@ -37,7 +37,7 @@
 	"daemon3": {
 	    "tracks": [
 		{"listen": "0.0.0.0:8083",
-		 "upstream": ":http:80",
+		 "upstream": ":http_daemon3:80",
 		 "healthy": "curl --output /dev/null --silent --head --fail http://$UPSTREAM"}
 	    ]
 	}
@@ -55,7 +55,7 @@
 	"service1": {
 	    "tracks": [
 		{"listen": ":unix:",
-		 "upstream": ":http:80",
+		 "upstream": ":http_service1:80",
 		 "healthy": "curl --output /dev/null --silent --head --fail http://$UPSTREAM"}
 	    ],
 	    "idle": "./last-activity",
@@ -71,7 +71,7 @@
 	"service3": {
 	    "tracks": [
 		{"listen": "0.0.0.0:8093",
-		 "upstream": ":http:80",
+		 "upstream": ":http_service3:80",
 		 "healthy": "curl --output /dev/null --silent --head --fail http://$UPSTREAM"}
 	    ]
 	},

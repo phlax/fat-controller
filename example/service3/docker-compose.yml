@@ -12,7 +12,7 @@ version: "2.4"
 services:
 
   # the name of this service must be unique to the fatc network
-  http:
+  http_service3:
     image: nginx
     depends_on:
       - redis
