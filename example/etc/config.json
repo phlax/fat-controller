@@ -1,4 +1,9 @@
 {
+    "networks": [
+	"network1",
+	"network2",
+	"other_network"
+    ],
     "daemons": {
 	"daemon0": {
 	    "tracks": [
