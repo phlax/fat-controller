@@ -1,4 +1,10 @@
-fatc (0.0.14) UNRELEASED; urgency=medium
+fatc (0.0.15) UNRELEASED; urgency=medium
+
+  * Add network subnet configuration
+
+ -- Ryan Northey <ryan@synca.io>  Thu, 07 May 2020 18:44:02 +0100
+
+fatc (0.0.14) buster; urgency=medium
 
   * Fixes for isolated daemons
   * Minor test fix
