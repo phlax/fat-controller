@@ -1,4 +1,10 @@
-fatc (0.0.11) UNRELEASED; urgency=medium
+fatc (0.0.12) UNRELEASED; urgency=medium
+
+  * Add network configuration for networks shared between stacks
+
+ -- Ryan Northey <ryan@synca.io>  Thu, 07 May 2020 10:29:06 +0100
+
+fatc (0.0.11) buster; urgency=medium
 
   * Move configuration to /etc/fatc/config.json
 
