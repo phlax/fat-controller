@@ -58,7 +58,7 @@ $D3_STATUS | grep HEAD
 $CURL http://localhost:8083 | grep Hello | grep backend | grep network
 $D3_STATUS--proxy -p ActiveState | grep -v inactive | grep active
 $D3_STATUS | grep GET
-$D3_COMPOSE logs http | grep GET
+$D3_COMPOSE logs http_daemon3 | grep GET
 
 
 ### Daemon 4

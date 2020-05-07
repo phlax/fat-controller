@@ -37,7 +37,7 @@ $S1_STATUS--proxy -p ActiveState | grep -v inactive | grep active
 $S1_STATUS -p ActiveState | grep -v inactive | grep active
 # $S1_STATUS | grep HEAD
 $S1_STATUS | grep GET
-$S1_COMPOSE logs http | grep GET
+$S1_COMPOSE logs http_service1 | grep GET
 
 ### SERVICE 2
 
@@ -68,8 +68,8 @@ $S3_STATUS -p ActiveState | grep -v inactive | grep active
 # $S3_STATUS | grep HEAD
 # $S3_STATUS | grep GET
 
-$S3_COMPOSE logs http | grep HEAD
-$S3_COMPOSE logs http | grep GET
+$S3_COMPOSE logs http_service3 | grep HEAD
+$S3_COMPOSE logs http_service3 | grep GET
 
 
 ### Backend/external services (Service4/5)
