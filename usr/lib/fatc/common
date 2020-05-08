@@ -61,8 +61,10 @@ fatc_get_last_activity () {
 	FATC_COMPOSE \
 	FATC_CONFIG \
 	FATC_DAEMONS \
+	FATC_DAEMONS_SOCKETS \
 	FATC_PROXY_SOCKETS \
 	FATC_SERVICES \
+	FATC_SERVICES_SOCKETS \
 	FATC_SYSTEMD
     cd "${stack_dir}"
     exec "$idle_fun"
