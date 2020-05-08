@@ -124,7 +124,7 @@ function fatc_stack_daemon_stop () {
 
 
 fatc_stack_service_wait () {
-    local address command ip now port START taken UPSTREAM
+    local address command ip network now port START taken UPSTREAM
     START=$(date +%s)
     if [[ -z "$4" || "$4" = null ]]; then
 	return
@@ -132,10 +132,11 @@ fatc_stack_service_wait () {
     export UPSTREAM=$5
     if [[ $UPSTREAM = :* ]]; then
 	# TODO: FIX TIMEOUT
-	address=$(echo "$UPSTREAM" | cut -d: -f2)
-	port=$(echo "$UPSTREAM" | cut -d: -f3)
+	network=$(echo "$UPSTREAM" | cut -d: -f2)
+	address=$(echo "$UPSTREAM" | cut -d: -f3)
+	port=$(echo "$UPSTREAM" | cut -d: -f4)
 	until [ -n "$ip" ]; do
-	    ip=$(fatc_stack_resolve "$address")
+	    ip=$(fatc_stack_resolve "$network" "$address")
 	    if [ -z "$ip" ]; then
 		sleep "$1"
 	    fi
@@ -156,7 +157,7 @@ fatc_stack_service_wait () {
 
 
 fatc_stack_daemon_wait () {
-    local address command ip now port taken START UPSTREAM
+    local address command ip network now port taken START UPSTREAM
     START=$(date +%s)
     if [[ -z "$4" || "$4" = null ]]; then
 	return
@@ -164,10 +165,11 @@ fatc_stack_daemon_wait () {
     export UPSTREAM=$5
     if [[ $UPSTREAM = :* ]]; then
 	# TODO: FIX TIMEOUT
-	address=$(echo "$UPSTREAM" | cut -d: -f2)
-	port=$(echo "$UPSTREAM" | cut -d: -f3)
+	network=$(echo "$UPSTREAM" | cut -d: -f2)
+	address=$(echo "$UPSTREAM" | cut -d: -f3)
+	port=$(echo "$UPSTREAM" | cut -d: -f4)
 	until [ -n "$ip" ]; do
-	    ip=$(fatc_stack_resolve "$address")
+	    ip=$(fatc_stack_resolve "$network" "$address")
 	    if [ -z "$ip" ]; then
 		sleep "$1"
 	    fi

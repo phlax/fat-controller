@@ -5,17 +5,18 @@
 
 
 fatc_proxy_start () {
-    local address backend ip port upstream
+    local address backend ip network port upstream
     upstream=$4
     if [[ "$upstream" = :backend:* ]]; then
 	backend=$(fatc_backend_resolve "${@}")
 	upstream="${4//:backend:/$backend:}"
     elif [[ $upstream = :* ]]; then
 	# TODO: FIX TIMEOUT
-	address=$(echo "$upstream" | cut -d: -f2)
-	port=$(echo "$upstream" | cut -d: -f3)
+	network=$(echo "$upstream" | cut -d: -f2)
+	address=$(echo "$upstream" | cut -d: -f3)
+	port=$(echo "$upstream" | cut -d: -f4)
 	until [ -n "$ip" ]; do
-	    ip=$(fatc_stack_resolve "$address")
+	    ip=$(fatc_stack_resolve "$network" "$address")
 	    if [ -z "$ip" ]; then
 		sleep .5
 	    fi

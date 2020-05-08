@@ -181,9 +181,10 @@ fatc_configure_track () {
 	fatc_configure_proxy_service "$stack_type" "$stack_name" "$index" "$upstream" "$private_network"
 	if [ "$listen" == ":unix:" ]; then
 	    listen=$(fatc_get_listen_socket "$stack_name" "$index")
-	elif [[ "$listen" == :proxy:* ]];then
+	elif [[ "$listen" == :* ]];then
+	    network=$(echo "$listen" | cut -d: -f2)
 	    port=$(echo "$listen" | cut -d: -f3)
-	    address=$(docker network inspect fatc_proxy | jq -r '.[].IPAM.Config[].Gateway')
+	    address=$(docker network inspect "fatc_${network}" | jq -r '.[].IPAM.Config[].Gateway')
 	    listen="${address}:${port}"
 	fi
 	fatc_configure_proxy_socket "$stack_type" "$stack_name" "$index" "$listen"
