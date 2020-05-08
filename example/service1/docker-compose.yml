@@ -27,4 +27,4 @@ services:
 networks:
   fatc:
     external:
-      name: fatc_proxy
+      name: fatc_upstream
