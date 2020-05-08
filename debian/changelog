@@ -1,4 +1,10 @@
-fatc (0.0.18) UNRELEASED; urgency=medium
+fatc (0.0.19) UNRELEASED; urgency=medium
+
+  * Fix for upstream proxy socket paths
+
+ -- Ryan Northey <ryan@synca.io>  Fri, 08 May 2020 13:00:34 +0100
+
+fatc (0.0.18) buster; urgency=medium
 
   * Fix for proxy socket paths
 
