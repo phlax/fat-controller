@@ -205,7 +205,7 @@ fatc_stack_resolve () {
     network=fatc_proxy
     containers=$(docker network inspect "$network" | jq -r '.[].Containers[] | values.Name' | tr '\n' ' ')
     for container in $containers; do
-	address=$(docker container inspect "$container" | jq -cr --arg network "$network" --arg name "$name" '.[].NetworkSettings.Networks[$network] // {} | select(.Aliases[] | match($name)) // {} | .IPAddress // empty')
+	address=$(docker container inspect "$container" | jq -cr --arg network "$network" --arg name "^${name}$" '.[].NetworkSettings.Networks[$network] // {} | select(.Aliases[] | match($name)) // {} | .IPAddress // empty')
 	if [ -n "$address" ]; then
 	   echo "$address"
 	   return
