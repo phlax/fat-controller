@@ -377,6 +377,7 @@ fatc_configure () {
     export FATC_CONFIG
     export FATC_SYSTEMD
     export FATC_DAEMONS
+    export FATC_PROXY_SOCKETS
     export FATC_SERVICES
 
     fatc_configure_networks
