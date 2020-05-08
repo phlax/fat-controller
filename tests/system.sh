@@ -50,6 +50,6 @@ $FC_EXEC docker network ls | grep fatc_network1
 $FC_EXEC docker network ls | grep fatc_network2
 $FC_EXEC docker network ls | grep fatc_other_network
 
-$FC_EXEC fatctl resolve stack http
+$FC_EXEC fatctl resolve stack proxy http
 
 docker-compose down
