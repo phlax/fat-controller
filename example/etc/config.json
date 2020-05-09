@@ -10,6 +10,12 @@
 	"network2": {},
 	"other_network": {}
     },
+    "volumes": {
+	"/var/run/fatc/sockets/testvolume": {
+	    "owner": "723:723",
+	    "permissions": "0700"
+	}
+    },
     "daemons": {
 	"daemon0": {
 	    "tracks": [

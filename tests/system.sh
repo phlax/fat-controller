@@ -52,4 +52,10 @@ $FC_EXEC docker network ls | grep fatc_other_network
 
 $FC_EXEC fatctl resolve stack upstream http
 
+
+## volumes
+$FC_EXEC ls -lh /var/run/fatc/sockets | grep testvolume | grep "drwx------"
+$FC_EXEC ls -lh /var/run/fatc/sockets | grep testvolume | grep 723
+
+
 docker-compose down
