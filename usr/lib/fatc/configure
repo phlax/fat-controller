@@ -66,14 +66,14 @@ fatc_configure_daemon_service () {
     cat > "$SERVICE" <<EOF
 [Unit]
 Description=Daemon service: $1
-Requires=configuration.service $6
-After=configuration.service $6
+Requires=configuration.service $5
+After=configuration.service $5
 [Install]
 WantedBy=fatc.target
 [Service]
-ExecStart=/usr/bin/fatctl start-daemon-stack $1 $5
-ExecStartPost=/usr/bin/fatctl wait-daemon-stack 0.5 $1 "$3" $4
-ExecStop=/usr/bin/fatctl stop-daemon-stack $1 $5
+ExecStart=/usr/bin/fatctl start-daemon-stack $1 $4
+ExecStartPost=/usr/bin/fatctl wait-daemon-stack 0.5 $1 "$2" $3
+ExecStop=/usr/bin/fatctl stop-daemon-stack $1 $4
 PassEnvironment=FATC_DAEMONS
 PassEnvironment=FATC_DAEMONS_SOCKETS
 PassEnvironment=FATC_COMPOSE
@@ -88,14 +88,14 @@ fatc_configure_service_service () {
     cat > "$SERVICE" <<EOF
 [Unit]
 Description=Service service: $1
-Requires=configuration.service $6
-After=configuration.service $6
+Requires=configuration.service $5
+After=configuration.service $5
 [Install]
 WantedBy=fatc.target
 [Service]
-ExecStart=/usr/bin/fatctl start-service-stack $1 $5
-ExecStartPost=/usr/bin/fatctl wait-service-stack 0.5 $1 "$3" $4
-ExecStop=/usr/bin/fatctl stop-service-stack $1 $5
+ExecStart=/usr/bin/fatctl start-service-stack $1 $4
+ExecStartPost=/usr/bin/fatctl wait-service-stack 0.5 $1 "$2" $3
+ExecStop=/usr/bin/fatctl stop-service-stack $1 $4
 PassEnvironment=FATC_SERVICES
 PassEnvironment=FATC_SERVICES_SOCKETS
 PassEnvironment=FATC_COMPOSE
@@ -148,16 +148,16 @@ fatc_configure_service_idle () {
 
 
 fatc_configure_track () {
-    local compose config depends_on healthy index line listen \
+    local config compose healthy index line listen \
 	  private_network result \
 	  services stack_name stack_type \
-	  upstream use_criu
+	  upstream
     stack_type=$1
     stack_name=$2
     index=$3
-    listen=$4
-    upstream=$5
-    compose=$(fatc_get_stack_compose "$stack_type" "$stack_name")
+    track=$(echo "${4}" | base64 --decode)
+    listen=$(echo "${track}" | jq -r ".listen // empty")
+    upstream=$(echo "${track}" | jq -r ".upstream // empty")
     result=()
     private_network=no
     if [ "$upstream" = ":unix:" ]; then
@@ -166,18 +166,6 @@ fatc_configure_track () {
 	    private_network=yes
 	fi
     fi
-    config=$(jq -cr \
-		--arg stack_name "$stack_name" \
-		--arg stack_type "${stack_type}s" \
-		"$FATC_STACK_CONFIG" \
-		"$FATC_CONFIG")
-    healthy=$(echo "$config" | jq -cr ".tracks // [] | .[$i] // {} | .healthy")
-    use_criu=$(echo "$config" | jq -cr ".use_criu // false")
-    depends_on=$(echo "$config" | jq -cr '.depends_on // [] | join (" ")')
-    depends=""
-    for dependency in $depends_on; do
-	depends="${depends} fatc.daemon.${dependency}.service"
-    done
     if [ -n "$listen" ]; then
 	fatc_configure_proxy_service "$stack_type" "$stack_name" "$index" "$upstream" "$private_network"
 	if [ "$listen" == ":unix:" ]; then
@@ -193,14 +181,19 @@ fatc_configure_track () {
 	systemctl enable "fatc.${stack_type}.${stack_name}.${index}--proxy.socket"
 	result+=("${stack_type}.${stack_name}: <- $listen")
     fi
+
+    compose=$(fatc_get_stack_compose "$stack_type" "$stack_name")
     if [ -f "$compose" ]; then
-	fatc_configure_"$stack_type"_service "$stack_name" "$index" "$healthy" "$upstream" "$use_criu" "$depends"
-	systemctl enable "fatc.${stack_type}.${stack_name}"
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
-	# fatc_configure_update_services "$stack_type" "$stack_name" "$index" "$listen" "$upstream" "$services"
 	result+=("${stack_type}.${stack_name}: -> docker: $upstream (${services%%*( )})")
     fi
     if [[ ! -f "$compose" || $index != 0 ]]; then
+	config=$(jq -cr \
+		    --arg stack_name "$stack_name" \
+		    --arg stack_type "${stack_type}s" \
+		    "$FATC_STACK_CONFIG" \
+		    "$FATC_CONFIG")
+	healthy=$(echo "$config" | jq -cr ".tracks // [] | .[$i] // {} | .healthy")
 	fatc_configure_backend "$stack_name" "$index" "$healthy" "$upstream"
 	systemctl enable "fatc.${stack_type}.${stack_name}"
 	result+=("${stack_type}.${stack_name}: -> $upstream")
@@ -212,7 +205,7 @@ fatc_configure_track () {
 
 
 fatc_get_tracks () {
-    local config stack_name stack_type
+    local stack_name stack_type
     stack_type="$1"
     stack_name="$2"
     jq -cr \
@@ -224,24 +217,21 @@ fatc_get_tracks () {
 
 
 fatc_configure_tracks () {
-    local i listen stack_name stack_type track upstream
+    local i stack_name stack_type track
     stack_type="$1"
     stack_name="$2"
     i=0
     for track in $(fatc_get_tracks "$stack_type" "$stack_name"); do
-	track=$(echo "${track}" | base64 --decode)
-	listen=$(echo "${track}" | jq -r ".listen // empty")
-	upstream=$(echo "${track}" | jq -r ".upstream // empty")
-	fatc_configure_track "$stack_type" "$stack_name" "$i" "$listen" "$upstream"
+	fatc_configure_track "$stack_type" "$stack_name" "$i" "$track"
 	i=$((i + 1))
     done
 }
 
 
 fatc_configure_composition () {
-    local compose idle_fun \
+    local compose dependency depends depends_on idle_fun \
 	  stack_name stack_type \
-	  services track_count
+	  services track_count use_criu
     stack_type="$1"
     stack_name="$2"
     track_count=$(fatc_get_tracks "$stack_type" "$stack_name" | wc -l)
@@ -249,6 +239,25 @@ fatc_configure_composition () {
     if [ ! -f "$compose" ]; then
 	return
     fi
+    config=$(jq -cr \
+		--arg stack_name "$stack_name" \
+		--arg stack_type "${stack_type}s" \
+		"$FATC_STACK_CONFIG" \
+		"$FATC_CONFIG")
+    healthy=$(echo "$config" | jq -cr ".tracks // [] | .[0] // {} | .healthy")
+    upstream=$(echo "$config" | jq -cr ".tracks // [] | .[0] // {} | .upstream")
+    if [ "$upstream" = ":unix:" ]; then
+	upstream=$(fatc_get_upstream_socket "$stack_type" "$stack_name" 0)
+    fi
+    use_criu=$(echo "$config" | jq -cr ".use_criu // false")
+    depends_on=$(echo "$config" | jq -cr '.depends_on // [] | join (" ")')
+    depends=""
+    for dependency in $depends_on; do
+	depends="${depends} fatc.daemon.${dependency}.service"
+    done
+    fatc_configure_"$stack_type"_service "$stack_name" "$healthy" "$upstream" "$use_criu" "$depends"
+    systemctl enable "fatc.${stack_type}.${stack_name}"
+    # fatc_configure_update_services "$stack_type" "$stack_name" "$index" "$listen" "$upstream" "$services"
     if [[ "$track_count" = 0 && "$stack_type" = "daemon" ]]; then
 	depends_on=$(jq -cr \
 			--arg stack_name "$stack_name" \
