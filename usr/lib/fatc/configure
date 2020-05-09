@@ -344,6 +344,23 @@ fatc_configure_networks () {
 }
 
 
+fatc_configure_volumes () {
+    local cmd volume volumes
+    volumes=$(jq -cr  '.volumes // {} | keys | join(" ")' "$FATC_CONFIG")
+    for volume in $volumes; do
+	owner=$(jq -cr --arg volume "$volume"  '.volumes // {} | .[$volume].owner // empty' "$FATC_CONFIG")
+	permissions=$(jq -cr --arg volume "$volume"  '.volumes // {} | .[$volume].permissions // empty' "$FATC_CONFIG")
+	mkdir -p "$volume"
+	if [ -n "$owner" ]; then
+	    chown "$owner" "$volume"
+	fi
+	if [ -n "$permissions" ]; then
+	    chmod "$permissions" "$volume"
+	fi
+    done
+}
+
+
 fatc_configure () {
     export -f fatc_configure_backend
     export -f fatc_configure_composition
@@ -385,6 +402,7 @@ fatc_configure () {
     export FATC_SERVICES_SOCKETS
 
     fatc_configure_networks
+    fatc_configure_volumes
     fatc_configure_parallel configure daemon
     fatc_configure_parallel configure service
     fatc_configure_parallel configure_start service
