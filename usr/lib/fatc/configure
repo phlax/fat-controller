@@ -3,6 +3,11 @@
 . /usr/lib/fatc/common
 
 
+FATC_DAEMON_CONFIG='.daemons // {} | .[$stack_name] // {}'
+FATC_SERVICE_CONFIG='.services // {} | .[$stack_name] // {}'
+FATC_STACK_CONFIG='.[$stack_type] // {} | .[$stack_name] // {}'
+
+
 fatc_configure_proxy_socket () {
     local listen
     protocol=ListenStream
@@ -144,9 +149,18 @@ fatc_configure_service_idle () {
 
 fatc_configure_update_services () {
     local stack tracks
-    stack=$(echo "$6" | jq --slurp -R 'rtrimstr("\n") | split(" ") | map({(.): {}}) | add')
-    tracks=$(echo {} | jq --arg track "${2}.${3}" --arg upstream "$5" --arg listen "$4" '.[$track] = {"upstream": $upstream, "listen": $listen}')
-    echo {} | jq --arg name "$2" --argjson stack "$stack" --argjson tracks "$tracks" '.[$name] = {"stack": $stack, "tracks": $tracks}'
+    stack=$(echo "$6" \
+		| jq --slurp -R \
+		     'rtrimstr("\n") | split(" ") | map({(.): {}}) | add')
+    tracks=$(echo {} \
+		 | jq --arg track "${2}.${3}" \
+		      --arg upstream "$5" \
+		      --arg listen "$4" \
+		      '.[$track] = {"upstream": $upstream, "listen": $listen}')
+    echo {} | jq --arg name "$2" \
+		 --argjson stack "$stack" \
+		 --argjson tracks "$tracks" \
+		 '.[$name] = {"stack": $stack, "tracks": $tracks}'
 }
 
 
@@ -169,7 +183,11 @@ fatc_configure_track () {
 	    private_network=yes
 	fi
     fi
-    config=$(jq -cr --arg stack_name "$stack_name" --arg stack_type "${stack_type}s" '.[$stack_type] // {} | .[$stack_name] // {}' "$FATC_CONFIG")
+    config=$(jq -cr \
+		--arg stack_name "$stack_name" \
+		--arg stack_type "${stack_type}s" \
+		"$FATC_STACK_CONFIG" \
+		"$FATC_CONFIG")
     healthy=$(echo "$config" | jq -cr ".tracks // [] | .[$i] // {} | .healthy")
     use_criu=$(echo "$config" | jq -cr ".use_criu // false")
     depends_on=$(echo "$config" | jq -cr '.depends_on // [] | join (" ")')
@@ -184,7 +202,8 @@ fatc_configure_track () {
 	elif [[ "$listen" == :* ]];then
 	    network=$(echo "$listen" | cut -d: -f2)
 	    port=$(echo "$listen" | cut -d: -f3)
-	    address=$(docker network inspect "fatc_${network}" | jq -r '.[].IPAM.Config[].Gateway')
+	    address=$(docker network inspect "fatc_${network}" \
+			  | jq -r '.[].IPAM.Config[].Gateway')
 	    listen="${address}:${port}"
 	fi
 	fatc_configure_proxy_socket "$stack_type" "$stack_name" "$index" "$listen"
@@ -209,13 +228,24 @@ fatc_configure_track () {
 }
 
 
+fatc_get_tracks () {
+    local config stack_name stack_type
+    stack_type="$1"
+    stack_name="$2"
+    jq -cr \
+       --arg stack_name "${stack_name}" \
+       --arg stack_type "${stack_type}s" \
+       "$FATC_STACK_CONFIG | .tracks // [] | .[] | @base64" \
+       "$FATC_CONFIG"
+}
+
+
 fatc_configure_tracks () {
-    local config i listen stack_name stack_type track upstream
+    local i listen stack_name stack_type track upstream
     stack_type="$1"
     stack_name="$2"
     i=0
-    config=$(jq -cr --arg stack_name "$stack_name" --arg stack_type "${stack_type}s" '.[$stack_type] // {} | .[$stack_name] // {}' "$FATC_CONFIG")
-    for track in $(echo "$config" | jq -cr ".tracks // [] | .[] | @base64"); do
+    for track in $(fatc_get_tracks "$stack_type" "$stack_name"); do
 	track=$(echo "${track}" | base64 --decode)
 	listen=$(echo "${track}" | jq -r ".listen // empty")
 	upstream=$(echo "${track}" | jq -r ".upstream // empty")
@@ -231,13 +261,16 @@ fatc_configure_composition () {
 	  services track_count
     stack_type="$1"
     stack_name="$2"
-    track_count="$3"
+    track_count=$(fatc_get_tracks "$stack_type" "$stack_name" | wc -l)
     compose=$(fatc_get_stack_compose "$stack_type" "$stack_name")
     if [ ! -f "$compose" ]; then
 	return
     fi
     if [[ "$track_count" = 0 && "$stack_type" = "daemon" ]]; then
-	depends_on=$(jq -cr --arg stack_name "$stack_name" '.daemons // {} | .[$stack_name] // {} | .depends_on // [] | join (" ")' "$FATC_CONFIG")
+	depends_on=$(jq -cr \
+			--arg stack_name "$stack_name" \
+			"$FATC_DAEMON_CONFIG | .depends_on // [] | join (\" \")" \
+			"$FATC_CONFIG")
 	depends=""
 	for dependency in $depends_on; do
 	    depends="${depends} fatc.daemon.${dependency}.service"
@@ -247,7 +280,10 @@ fatc_configure_composition () {
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
 	fatc_log "daemon.${stack_name}: docker: ${services%%*( )}"
     elif [ "$stack_type" = "service" ]; then
-	idle_fun=$(jq -cr --arg stack_name "$stack_name" '.services // {} | .[$stack_name] // {} | .idle // empty' "$FATC_CONFIG")
+	idle_fun=$(jq -cr \
+		      --arg stack_name "$stack_name" \
+		      "$FATC_SERVICE_CONFIG | .idle // empty" \
+		      "$FATC_CONFIG")
 	if [ -z "$idle_fun" ]; then
 	    fatc_log_warn "Service ($stack_name) has no idle function and will never timeout"
 	else
@@ -259,13 +295,11 @@ fatc_configure_composition () {
 
 fatc_configure_stack () {
     local stack_name \
-	  stack_type \
-	  track_count
+	  stack_type
     stack_type=$1
     stack_name=$2
     fatc_configure_tracks "$stack_type" "$stack_name"
-    track_count=$(jq -cr --arg stack_name "$stack_name" --arg stack_type "${stack_type}s" '.[$stack_type] // {} | .[$stack_name] // {} | .tracks // [] | length' "$FATC_CONFIG")
-    fatc_configure_composition "$stack_type" "$stack_name" "$track_count"
+    fatc_configure_composition "$stack_type" "$stack_name"
 }
 
 
@@ -284,8 +318,7 @@ fatc_configure_start_service () {
     # stacks are activated dynamically when the socket is tickled
     local i track
     i=0
-    tracks=$(jq -cr --arg stack_name "$1" '.services // {} | .[$stack_name] // {} | .tracks // [] | .[] | @base64' "$FATC_CONFIG")
-    for track in $tracks; do
+    for track in $(fatc_get_tracks service "$1"); do
 	systemctl start "fatc.service.${1}.${i}--proxy.socket"
 	i=$((i + 1))
     done
@@ -294,16 +327,16 @@ fatc_configure_start_service () {
 
 fatc_configure_start_daemon () {
     local compose config i track
-    config=$(jq -cr --arg stack_name "$1" '.daemons // {} | .[$stack_name] // {}' "$FATC_CONFIG")
+    config=$(jq -cr \
+		--arg stack_name "$1" \
+		"$FATC_DAEMON_CONFIG" \
+		"$FATC_CONFIG")
     compose=$(fatc_get_stack_compose daemon "$1")
-    if [ "$config" != "{}" ]; then
-	i=0
-	for track in $(echo "$config" | jq -cr ".tracks // [] | .[] | @base64"); do
-	    # create a `track` - ie socket activated channel
-	    systemctl start "fatc.daemon.${1}.${i}--proxy.socket"
-	    i=$((i + 1))
-	done
-    fi
+    i=0
+    for track in $(echo "$config" | jq -cr ".tracks // [] | .[] | @base64"); do
+	systemctl start "fatc.daemon.${1}.${i}--proxy.socket"
+	i=$((i + 1))
+    done
     if [ -f "$compose" ]; then
 	systemctl start "fatc.daemon.${1}"
     fi
@@ -390,16 +423,20 @@ fatc_configure () {
     export -f fatc_get_stack_dir
     export -f fatc_get_stack_services
     export -f fatc_get_sockets_dir
+    export -f fatc_get_tracks
     export -f fatc_get_upstream_socket
 
     export FATC_COMPOSE
     export FATC_CONFIG
-    export FATC_SYSTEMD
+    export FATC_DAEMON_CONFIG
     export FATC_DAEMONS
     export FATC_DAEMONS_SOCKETS
     export FATC_PROXY_SOCKETS
+    export FATC_SERVICE_CONFIG
     export FATC_SERVICES
     export FATC_SERVICES_SOCKETS
+    export FATC_STACK_CONFIG
+    export FATC_SYSTEMD
 
     fatc_configure_networks
     fatc_configure_volumes
