@@ -139,7 +139,7 @@ fatc_get_upstream_socket () {
     stack_name="$2"
     index="$3"
     sockets_dir=$(fatc_get_sockets_dir "$stack_type")
-    echo "${sockets_dir}/${stack_name}/${stack_type}.${index}.sock"
+    echo "${sockets_dir}/${stack_name}/${stack_type}.sock"
 }
 
 

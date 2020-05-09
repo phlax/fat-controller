@@ -26,8 +26,8 @@ fatc_configure_proxy_service () {
     cat > "$PROXY_SERVICE" <<EOF
 [Unit]
 Description=Proxy $1 service: $2.$3
-Requires=fatc.$1.$2.$3.service
-After=fatc.$1.$2.$3.service
+Requires=fatc.$1.$2.service
+After=fatc.$1.$2.service
 [Service]
 ExecStart=/usr/bin/fatctl start-proxy $1 $2 $3 $4
 PrivateTmp=yes
@@ -36,10 +36,10 @@ EOF
 
 
 fatc_configure_isolated_daemon () {
-    SERVICE="${FATC_SYSTEMD}/fatc.daemon.${1}.0.service"
+    SERVICE="${FATC_SYSTEMD}/fatc.daemon.${1}.service"
     cat > "$SERVICE" <<EOF
 [Unit]
-Description=Daemon service: $1.0
+Description=Daemon service: $1
 Requires=configuration.service $2
 After=configuration.service $2
 
@@ -57,18 +57,18 @@ EOF
 
 
 fatc_configure_daemon_service () {
-    SERVICE="${FATC_SYSTEMD}/fatc.daemon.${1}.${2}.service"
+    SERVICE="${FATC_SYSTEMD}/fatc.daemon.${1}.service"
     cat > "$SERVICE" <<EOF
 [Unit]
-Description=Daemon service: $1.$2
+Description=Daemon service: $1
 Requires=configuration.service $6
 After=configuration.service $6
 [Install]
 WantedBy=fatc.target
 [Service]
-ExecStart=/usr/bin/fatctl start-daemon-stack $1 $2 $5
-ExecStartPost=/usr/bin/fatctl wait-daemon-stack 0.5 $1 $2 "$3" $4
-ExecStop=/usr/bin/fatctl stop-daemon-stack $1 $2 $5
+ExecStart=/usr/bin/fatctl start-daemon-stack $1 $5
+ExecStartPost=/usr/bin/fatctl wait-daemon-stack 0.5 $1 "$3" $4
+ExecStop=/usr/bin/fatctl stop-daemon-stack $1 $5
 PassEnvironment=FATC_DAEMONS
 PassEnvironment=FATC_DAEMONS_SOCKETS
 PassEnvironment=FATC_COMPOSE
@@ -79,18 +79,18 @@ EOF
 
 
 fatc_configure_service_service () {
-    SERVICE="${FATC_SYSTEMD}/fatc.service.${1}.${2}.service"
+    SERVICE="${FATC_SYSTEMD}/fatc.service.${1}.service"
     cat > "$SERVICE" <<EOF
 [Unit]
-Description=Service service: $1.$2
+Description=Service service: $1
 Requires=configuration.service $6
 After=configuration.service $6
 [Install]
 WantedBy=fatc.target
 [Service]
-ExecStart=/usr/bin/fatctl start-service-stack $1 $2 $5
-ExecStartPost=/usr/bin/fatctl wait-service-stack 0.5 $1 $2 "$3" $4
-ExecStop=/usr/bin/fatctl stop-service-stack $1 $2 $5
+ExecStart=/usr/bin/fatctl start-service-stack $1 $5
+ExecStartPost=/usr/bin/fatctl wait-service-stack 0.5 $1 "$3" $4
+ExecStop=/usr/bin/fatctl stop-service-stack $1 $5
 PassEnvironment=FATC_SERVICES
 PassEnvironment=FATC_SERVICES_SOCKETS
 PassEnvironment=FATC_COMPOSE
@@ -104,16 +104,16 @@ EOF
 
 
 fatc_configure_backend () {
-    SERVICE="${FATC_SYSTEMD}/fatc.service.${1}.${2}.service"
+    SERVICE="${FATC_SYSTEMD}/fatc.service.${1}.service"
     cat > "$SERVICE" <<EOF
 [Unit]
 Description=Service service: $1.$2
 [Install]
 WantedBy=fatc.target
 [Service]
-ExecStart=/usr/bin/fatctl start-backend $1.$2
+ExecStart=/usr/bin/fatctl start-backend $1
 ExecStartPost=/usr/bin/fatctl wait-backend 0.5 $1 $2 "$3" $4
-ExecStop=/usr/bin/fatctl stop-backend $1.$2
+ExecStop=/usr/bin/fatctl stop-backend $1
 PassEnvironment=FATC_SERVICES
 PassEnvironment=FATC_SERVICES_SOCKETS
 PassEnvironment=FATC_TIMEOUT_SOCKETS
@@ -135,7 +135,7 @@ fatc_configure_service_idle () {
 	mkdir -p "$(dirname "$FATC_IDLE")"
 	echo "{}" > "$FATC_IDLE"
     fi
-    jq --arg stack_name "${stack_name}.0" \
+    jq --arg stack_name "${stack_name}" \
        --argjson service "$service" \
        '.[$stack_name] = $service' "$FATC_IDLE" \
 	| sponge "$FATC_IDLE"
@@ -175,7 +175,7 @@ fatc_configure_track () {
     depends_on=$(echo "$config" | jq -cr '.depends_on // [] | join (" ")')
     depends=""
     for dependency in $depends_on; do
-	depends="${depends} fatc.daemon.${dependency}.0.service"
+	depends="${depends} fatc.daemon.${dependency}.service"
     done
     if [ -n "$listen" ]; then
 	fatc_configure_proxy_service "$stack_type" "$stack_name" "$index" "$upstream" "$private_network"
@@ -189,19 +189,19 @@ fatc_configure_track () {
 	fi
 	fatc_configure_proxy_socket "$stack_type" "$stack_name" "$index" "$listen"
 	systemctl enable "fatc.${stack_type}.${stack_name}.${index}--proxy.socket"
-	result+=("${stack_type}.${stack_name}.${index}: <- $listen")
+	result+=("${stack_type}.${stack_name}: <- $listen")
     fi
     if [ -f "$compose" ]; then
 	fatc_configure_"$stack_type"_service "$stack_name" "$index" "$healthy" "$upstream" "$use_criu" "$depends"
-	systemctl enable "fatc.${stack_type}.${stack_name}.${index}"
+	systemctl enable "fatc.${stack_type}.${stack_name}"
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
 	fatc_configure_update_services "$stack_type" "$stack_name" "$index" "$listen" "$upstream" "$services"
-	result+=("${stack_type}.${stack_name}.${index}: -> docker: $upstream (${services%%*( )})")
+	result+=("${stack_type}.${stack_name}: -> docker: $upstream (${services%%*( )})")
     fi
     if [[ ! -f "$compose" || $index != 0 ]]; then
 	fatc_configure_backend "$stack_name" "$index" "$healthy" "$upstream"
-	systemctl enable "fatc.${stack_type}.${stack_name}.${index}"
-	result+=("${stack_type}.${stack_name}.${index}: -> $upstream")
+	systemctl enable "fatc.${stack_type}.${stack_name}"
+	result+=("${stack_type}.${stack_name}: -> $upstream")
     fi
     for line in "${result[@]}"; do
 	fatc_log "$line"
@@ -240,12 +240,12 @@ fatc_configure_composition () {
 	depends_on=$(jq -cr --arg stack_name "$stack_name" '.daemons // {} | .[$stack_name] // {} | .depends_on // [] | join (" ")' "$FATC_CONFIG")
 	depends=""
 	for dependency in $depends_on; do
-	    depends="${depends} fatc.daemon.${dependency}.0.service"
+	    depends="${depends} fatc.daemon.${dependency}.service"
 	done
 	fatc_configure_isolated_daemon "$stack_name" "$depends"
-	systemctl enable "fatc.daemon.${stack_name}.0"
+	systemctl enable "fatc.daemon.${stack_name}"
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
-	fatc_log "daemon.${stack_name}.0: docker: ${services%%*( )}"
+	fatc_log "daemon.${stack_name}: docker: ${services%%*( )}"
     elif [ "$stack_type" = "service" ]; then
 	idle_fun=$(jq -cr --arg stack_name "$stack_name" '.services // {} | .[$stack_name] // {} | .idle // empty' "$FATC_CONFIG")
 	if [ -z "$idle_fun" ]; then
@@ -305,10 +305,7 @@ fatc_configure_start_daemon () {
 	done
     fi
     if [ -f "$compose" ]; then
-	# this enforces only one composition stack per daemon
-	# if there are no tracks then the stack doesnt get an index suffix
-	# if there are its suffixed with `.0`
-	systemctl start "fatc.daemon.${1}.0"
+	systemctl start "fatc.daemon.${1}"
     fi
 }
 

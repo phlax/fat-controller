@@ -27,7 +27,7 @@ function fatc_stack_service_stop () {
 
 function fatc_stack_service_check_socket_status () {
     local socket
-    socket=$FATC_SERVICES_SOCKETS/$1/service.$2.sock
+    socket=$FATC_SERVICES_SOCKETS/$1/service.sock
     if [ -S "$socket" ]; then
 	fatc_log_warn "Removing stale socket: $socket"
         rm "$socket"
@@ -72,7 +72,7 @@ fatc_stack_checkpoint () {
 
 function fatc_stack_service_start () {
     local compose compose_file
-    fatc_stack_service_check_socket_status "$1" "$2"
+    fatc_stack_service_check_socket_status "$1"
     compose_file=$FATC_SERVICES/$1/docker-compose.yml
     compose="$FATC_COMPOSE \
 	   	    -p service_$1 \
@@ -92,8 +92,7 @@ function fatc_stack_service_start () {
 
 function fatc_stack_daemon_clear_socket () {
     local socket
-    # TODO: use proper index ?
-    socket="${FATC_DAEMONS_SOCKETS}/${1}/daemon.0.sock"
+    socket="${FATC_DAEMONS_SOCKETS}/${1}/daemon.sock"
     if [ -S "$socket" ]; then
 	fatc_log_warn "Removing stale socket: $socket"
         rm "$socket"
@@ -126,10 +125,10 @@ function fatc_stack_daemon_stop () {
 fatc_stack_service_wait () {
     local address command ip network now port START taken UPSTREAM
     START=$(date +%s)
-    if [[ -z "$4" || "$4" = null ]]; then
+    if [[ -z "$3" || "$3" = null ]]; then
 	return
     fi
-    export UPSTREAM=$5
+    export UPSTREAM=$4
     if [[ $UPSTREAM = :* ]]; then
 	# TODO: FIX TIMEOUT
 	network=$(echo "$UPSTREAM" | cut -d: -f2)
@@ -143,13 +142,13 @@ fatc_stack_service_wait () {
 	done
 	export UPSTREAM="$ip:$port"
     fi
-    command=$(echo "$4" | envsubst '${UPSTREAM}')
+    command=$(echo "$3" | envsubst '${UPSTREAM}')
     until $command; do
 	sleep "$1"
 	now=$(date +%s)
 	taken=$(echo "$now - $START" | bc)
 	if [[ "$taken" -gt "$FATC_TIMEOUT_SOCKETS" ]]; then
-	    fatc_log_err "Timed out waiting for service: $3"
+	    fatc_log_err "Timed out waiting for service: $2"
 	    exit 1
 	fi
     done
@@ -159,10 +158,10 @@ fatc_stack_service_wait () {
 fatc_stack_daemon_wait () {
     local address command ip network now port taken START UPSTREAM
     START=$(date +%s)
-    if [[ -z "$4" || "$4" = null ]]; then
+    if [[ -z "$3" || "$3" = null ]]; then
 	return
     fi
-    export UPSTREAM=$5
+    export UPSTREAM=$4
     if [[ $UPSTREAM = :* ]]; then
 	# TODO: FIX TIMEOUT
 	network=$(echo "$UPSTREAM" | cut -d: -f2)
@@ -176,13 +175,14 @@ fatc_stack_daemon_wait () {
 	done
 	export UPSTREAM="$ip:$port"
     fi
-    command=$(echo "$4" | envsubst '${UPSTREAM}')
+    command=$(echo "$3" | envsubst '${UPSTREAM}')
+    echo "WAIT COMMAND: $command"
     until $command; do
 	sleep "$1"
 	now=$(date +%s)
 	taken=$(echo "$now - $START" | bc)
 	if [[ "$taken" -gt "$FATC_TIMEOUT_SOCKETS" ]]; then
-	    fatc_log_err "Timed out waiting for daemon: $3"
+	    fatc_log_err "Timed out waiting for daemon: $2"
 	    exit 1
 	fi
     done
