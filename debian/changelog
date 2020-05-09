@@ -1,4 +1,10 @@
-fatc (0.0.24) UNRELEASED; urgency=medium
+fatc (0.0.25) UNRELEASED; urgency=medium
+
+  * More lib cleanups
+
+ -- Ryan Northey <ryan@synca.io>  Sat, 09 May 2020 18:33:42 +0100
+
+fatc (0.0.24) buster; urgency=medium
 
   * Lib cleanups
 
