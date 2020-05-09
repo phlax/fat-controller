@@ -1,4 +1,10 @@
-fatc (0.0.23) UNRELEASED; urgency=medium
+fatc (0.0.24) UNRELEASED; urgency=medium
+
+  * Lib cleanups
+
+ -- Ryan Northey <ryan@synca.io>  Sat, 09 May 2020 15:51:34 +0100
+
+fatc (0.0.23) buster; urgency=medium
 
   * Add filesystem volume configuration
 
