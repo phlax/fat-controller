@@ -1,4 +1,10 @@
-fatc (0.0.21) UNRELEASED; urgency=medium
+fatc (0.0.22) UNRELEASED; urgency=medium
+
+  * Remove multistack configuration
+
+ -- Ryan Northey <ryan@synca.io>  Sat, 09 May 2020 06:32:11 +0100
+
+fatc (0.0.21) buster; urgency=medium
 
   * Make proxy/upstream resolution configurable
 
