@@ -147,23 +147,6 @@ fatc_configure_service_idle () {
 }
 
 
-fatc_configure_update_services () {
-    local stack tracks
-    stack=$(echo "$6" \
-		| jq --slurp -R \
-		     'rtrimstr("\n") | split(" ") | map({(.): {}}) | add')
-    tracks=$(echo {} \
-		 | jq --arg track "${2}.${3}" \
-		      --arg upstream "$5" \
-		      --arg listen "$4" \
-		      '.[$track] = {"upstream": $upstream, "listen": $listen}')
-    echo {} | jq --arg name "$2" \
-		 --argjson stack "$stack" \
-		 --argjson tracks "$tracks" \
-		 '.[$name] = {"stack": $stack, "tracks": $tracks}'
-}
-
-
 fatc_configure_track () {
     local compose config depends_on healthy index line listen \
 	  private_network result \
@@ -214,7 +197,7 @@ fatc_configure_track () {
 	fatc_configure_"$stack_type"_service "$stack_name" "$index" "$healthy" "$upstream" "$use_criu" "$depends"
 	systemctl enable "fatc.${stack_type}.${stack_name}"
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
-	fatc_configure_update_services "$stack_type" "$stack_name" "$index" "$listen" "$upstream" "$services"
+	# fatc_configure_update_services "$stack_type" "$stack_name" "$index" "$listen" "$upstream" "$services"
 	result+=("${stack_type}.${stack_name}: -> docker: $upstream (${services%%*( )})")
     fi
     if [[ ! -f "$compose" || $index != 0 ]]; then
@@ -326,17 +309,13 @@ fatc_configure_start_service () {
 
 
 fatc_configure_start_daemon () {
-    local compose config i track
-    config=$(jq -cr \
-		--arg stack_name "$1" \
-		"$FATC_DAEMON_CONFIG" \
-		"$FATC_CONFIG")
-    compose=$(fatc_get_stack_compose daemon "$1")
+    local compose i track
     i=0
-    for track in $(echo "$config" | jq -cr ".tracks // [] | .[] | @base64"); do
+    for track in $(fatc_get_tracks daemon "$1"); do
 	systemctl start "fatc.daemon.${1}.${i}--proxy.socket"
 	i=$((i + 1))
     done
+    compose=$(fatc_get_stack_compose daemon "$1")
     if [ -f "$compose" ]; then
 	systemctl start "fatc.daemon.${1}"
     fi
@@ -402,7 +381,7 @@ fatc_configure () {
     export -f fatc_configure_stack
     export -f fatc_configure_proxy_service
     export -f fatc_configure_proxy_socket
-    export -f fatc_configure_update_services
+    # export -f fatc_configure_update_services
 
     export -f fatc_configure_service
     export -f fatc_configure_service_service
