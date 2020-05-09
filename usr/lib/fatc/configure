@@ -166,22 +166,19 @@ fatc_configure_track () {
 	    private_network=yes
 	fi
     fi
-    if [ -n "$listen" ]; then
-	fatc_configure_proxy_service "$stack_type" "$stack_name" "$index" "$upstream" "$private_network"
-	if [ "$listen" == ":unix:" ]; then
-	    listen=$(fatc_get_listen_socket "$stack_name" "$index")
-	elif [[ "$listen" == :* ]];then
-	    network=$(echo "$listen" | cut -d: -f2)
-	    port=$(echo "$listen" | cut -d: -f3)
-	    address=$(docker network inspect "fatc_${network}" \
-			  | jq -r '.[].IPAM.Config[].Gateway')
-	    listen="${address}:${port}"
-	fi
-	fatc_configure_proxy_socket "$stack_type" "$stack_name" "$index" "$listen"
-	systemctl enable "fatc.${stack_type}.${stack_name}.${index}--proxy.socket"
-	result+=("${stack_type}.${stack_name}: <- $listen")
+    fatc_configure_proxy_service "$stack_type" "$stack_name" "$index" "$upstream" "$private_network"
+    if [ "$listen" == ":unix:" ]; then
+	listen=$(fatc_get_listen_socket "$stack_name" "$index")
+    elif [[ "$listen" == :* ]];then
+	network=$(echo "$listen" | cut -d: -f2)
+	port=$(echo "$listen" | cut -d: -f3)
+	address=$(docker network inspect "fatc_${network}" \
+		      | jq -r '.[].IPAM.Config[].Gateway')
+	listen="${address}:${port}"
     fi
-
+    fatc_configure_proxy_socket "$stack_type" "$stack_name" "$index" "$listen"
+    systemctl enable "fatc.${stack_type}.${stack_name}.${index}--proxy.socket"
+    result+=("${stack_type}.${stack_name}: <- $listen")
     compose=$(fatc_get_stack_compose "$stack_type" "$stack_name")
     if [ -f "$compose" ]; then
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
@@ -255,23 +252,16 @@ fatc_configure_composition () {
     for dependency in $depends_on; do
 	depends="${depends} fatc.daemon.${dependency}.service"
     done
-    fatc_configure_"$stack_type"_service "$stack_name" "$healthy" "$upstream" "$use_criu" "$depends"
-    systemctl enable "fatc.${stack_type}.${stack_name}"
-    # fatc_configure_update_services "$stack_type" "$stack_name" "$index" "$listen" "$upstream" "$services"
     if [[ "$track_count" = 0 && "$stack_type" = "daemon" ]]; then
-	depends_on=$(jq -cr \
-			--arg stack_name "$stack_name" \
-			"$FATC_DAEMON_CONFIG | .depends_on // [] | join (\" \")" \
-			"$FATC_CONFIG")
-	depends=""
-	for dependency in $depends_on; do
-	    depends="${depends} fatc.daemon.${dependency}.service"
-	done
 	fatc_configure_isolated_daemon "$stack_name" "$depends"
-	systemctl enable "fatc.daemon.${stack_name}"
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
 	fatc_log "daemon.${stack_name}: docker: ${services%%*( )}"
-    elif [ "$stack_type" = "service" ]; then
+    else
+	fatc_configure_"$stack_type"_service "$stack_name" "$healthy" "$upstream" "$use_criu" "$depends"
+	# fatc_configure_update_services "$stack_type" "$stack_name" "$index" "$listen" "$upstream" "$services"
+    fi
+    systemctl enable "fatc.${stack_type}.${stack_name}"
+    if [ "$stack_type" = "service" ]; then
 	idle_fun=$(jq -cr \
 		      --arg stack_name "$stack_name" \
 		      "$FATC_SERVICE_CONFIG | .idle // empty" \
