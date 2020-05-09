@@ -188,6 +188,7 @@ fatc_get_service_idle () {
     fi
 }
 
+
 fatc_service_uptime () {
     local service started started_timestamp timestamp
     timestamp=$(date +"%s")

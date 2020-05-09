@@ -147,6 +147,30 @@ fatc_configure_service_idle () {
 }
 
 
+fatc_get_listen_address () {
+    if [ "$1" == ":unix:" ]; then
+	fatc_get_listen_socket "$2" "$3"
+    elif [[ "$listen" == :* ]];then
+	network=$(echo "$1" | cut -d: -f2)
+	port=$(echo "$1" | cut -d: -f3)
+	address=$(docker network inspect "fatc_${network}" \
+		      | jq -r '.[].IPAM.Config[].Gateway')
+	echo "${address}:${port}"
+    else
+	echo "$1"
+    fi
+}
+
+
+fatc_get_upstream_address () {
+    if [ "$1" = ":unix:" ]; then
+	fatc_get_upstream_socket "$2" "$3" "$4"
+    else
+	echo "$1"
+    fi
+}
+
+
 fatc_configure_track () {
     local config compose healthy index line listen \
 	  private_network result \
@@ -160,22 +184,12 @@ fatc_configure_track () {
     upstream=$(echo "${track}" | jq -r ".upstream // empty")
     result=()
     private_network=no
-    if [ "$upstream" = ":unix:" ]; then
-	upstream=$(fatc_get_upstream_socket "$stack_type" "$stack_name" "$index")
-	if [ "$listen" = ":unix:" ]; then
-	    private_network=yes
-	fi
+    if [[ "$upstream" = ":unix:" && "$listen" = ":unix:" ]]; then
+	private_network=yes
     fi
+    upstream=$(fatc_get_upstream_address "$upstream" "$stack_type" "$stack_name" "$index")
+    listen=$(fatc_get_listen_address "$listen" "$stack_name" "$index")
     fatc_configure_proxy_service "$stack_type" "$stack_name" "$index" "$upstream" "$private_network"
-    if [ "$listen" == ":unix:" ]; then
-	listen=$(fatc_get_listen_socket "$stack_name" "$index")
-    elif [[ "$listen" == :* ]];then
-	network=$(echo "$listen" | cut -d: -f2)
-	port=$(echo "$listen" | cut -d: -f3)
-	address=$(docker network inspect "fatc_${network}" \
-		      | jq -r '.[].IPAM.Config[].Gateway')
-	listen="${address}:${port}"
-    fi
     fatc_configure_proxy_socket "$stack_type" "$stack_name" "$index" "$listen"
     systemctl enable "fatc.${stack_type}.${stack_name}.${index}--proxy.socket"
     result+=("${stack_type}.${stack_name}: <- $listen")
@@ -396,12 +410,14 @@ fatc_configure () {
     export -f fatc_log_err
 
     export -f fatc_get_listen_socket
+    export -f fatc_get_listen_address
     export -f fatc_get_stack_compose
     export -f fatc_get_stack_compose_command
     export -f fatc_get_stack_dir
     export -f fatc_get_stack_services
     export -f fatc_get_sockets_dir
     export -f fatc_get_tracks
+    export -f fatc_get_upstream_address
     export -f fatc_get_upstream_socket
 
     export FATC_COMPOSE
