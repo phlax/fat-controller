@@ -1,4 +1,11 @@
-fatc (0.0.29) UNRELEASED; urgency=medium
+fatc (0.0.30) UNRELEASED; urgency=medium
+
+  * Use fatc user for systemd units
+  * Remove obsolete function export
+
+ -- Ryan Northey <ryan@synca.io>  Sun, 10 May 2020 16:00:17 +0100
+
+fatc (0.0.29) buster; urgency=medium
 
   * Cleanup tidy systemd unit configuration
 
