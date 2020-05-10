@@ -85,8 +85,8 @@ After=configuration.service ${depends}
 WantedBy=fatc.target
 [Service]
 User=fatc
-ExecStart=/usr/bin/fatctl start-${stack_type}-stack ${stack_name} ${use_criu}
-ExecStartPost=/usr/bin/fatctl wait-${1}-stack 0.5 ${stack_name} "${healthy}" ${upstream}
+ExecStart=/usr/bin/fatctl start-stack ${stack_type} ${stack_name} ${use_criu}
+ExecStartPost=/usr/bin/fatctl wait-stack 0.5 "${healthy}" ${upstream}
 ExecStop=/usr/bin/fatctl stop-${stack_type}-stack ${stack_name} ${use_criu}
 PassEnvironment=FATC_DAEMONS
 PassEnvironment=FATC_DAEMONS_SOCKETS

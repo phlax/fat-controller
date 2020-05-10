@@ -116,7 +116,7 @@ fatc_get_stack_compose () {
     stack_type="$1"
     stack_name="$2"
     dir=$(fatc_get_stack_dir "$stack_type")
-    echo "$dir/$stack_name/docker-compose.yml"
+    printf "%s/$stack_name/docker-compose.yml" "$dir"
 }
 
 
@@ -125,11 +125,15 @@ fatc_get_stack_compose_command () {
     stack_type="$1"
     stack_name="$2"
     compose=$(fatc_get_stack_compose "$stack_type" "$stack_name")
-    echo "${FATC_COMPOSE} \
-              -p ${stack_type}_${stack_name} \
-              -f ${compose} \
+    printf "%s \
+              -p %s_%s \
+              -f %s \
               --skip-hostname-check \
-              --no-ansi"
+              --no-ansi" \
+	   "$FATC_COMPOSE" \
+	   "$stack_type" \
+	   "$stack_name" \
+	   "$compose"
 }
 
 
@@ -226,4 +230,43 @@ fatc_create_user () {
 	--system \
         "$FATC_USER"
     gpasswd -a "$FATC_USER" docker
+}
+
+
+fatc_wait_for () {
+    local cmd now start taken
+    # cmd="$1"
+    cmd=$(echo "$1" | base64 --decode)
+    start="$2"
+    step="$3"
+    timeout="$4"
+    until $cmd; do
+	sleep "$step"
+	now=$(date +%s)
+	taken=$(echo "$now - $start" | bc)
+	if [[ "$taken" -gt "$timeout" ]]; then
+	    fatc_log_err "Timed out waiting for: $cmd"
+	    exit 1
+	fi
+    done
+}
+
+
+fatc_get_upstream () {
+    local address ip port network
+    if [[ "$1" = :* ]]; then
+	# TODO: FIX TIMEOUT
+	network=$(echo "$1" | cut -d: -f2)
+	address=$(echo "$1" | cut -d: -f3)
+	port=$(echo "$1" | cut -d: -f4)
+	until [ -n "$ip" ]; do
+	    ip=$(fatc_stack_resolve "$network" "$address")
+	    if [ -z "$ip" ]; then
+		sleep "$2"
+	    fi
+	done
+	echo "$ip:$port"
+    else
+	echo "$1"
+    fi
 }
