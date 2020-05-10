@@ -9,14 +9,26 @@ FATC_STACK_CONFIG='.[$stack_type] // {} | .[$stack_name] // {}'
 
 
 fatc_configure_proxy_socket () {
-    local listen protocol socket socket_path
-    protocol=ListenStream
+    local index listen private_network protocol \
+	  socket socket_path stack_name stack_type upstream
+    stack_type="$1"
+    stack_name="$2"
+    index="$3"
     listen="$4"
+    upstream="$5"
+    private_network=no
+    if [[ "$upstream" = ":unix:" && "$listen" = ":unix:" ]]; then
+	private_network=yes
+    fi
+    upstream=$(fatc_get_upstream_address "$upstream" "$stack_type" "$stack_name" "$index")
+    listen=$(fatc_get_listen_address "$listen" "$stack_name" "$index")
+    fatc_configure_proxy_service "$stack_type" "$stack_name" "$index" "$upstream" "$private_network"
+    protocol=ListenStream
     if [ "${listen: -4}" = "/udp" ]; then
 	protocol=ListenDatagram
 	listen="${listen::-4}"
     fi
-    socket="fatc.${1}.${2}.${3}--proxy.socket"
+    socket="fatc.${stack_type}.${stack_name}.${index}--proxy.socket"
     socket_path="${FATC_SYSTEMD}/${socket}"
     cat > "$socket_path" <<EOF
 [Socket]
@@ -42,46 +54,21 @@ EOF
 }
 
 
-fatc_configure_daemon_service () {
+fatc_configure_systemd_service () {
     local name unit_path
-    name="fatc.daemon.${1}"
+    name="fatc.${1}.${2}"
     unit_path="${FATC_SYSTEMD}/${name}.service"
     cat > "$unit_path" <<EOF
 [Unit]
-Description=Daemon service: $1
-Requires=configuration.service $5
-After=configuration.service $5
+Description=Fatc ${1}: $2
+Requires=configuration.service $6
+After=configuration.service $6
 [Install]
 WantedBy=fatc.target
 [Service]
-ExecStart=/usr/bin/fatctl start-daemon-stack $1 $4
-ExecStartPost=/usr/bin/fatctl wait-daemon-stack 0.5 $1 "$2" $3
-ExecStop=/usr/bin/fatctl stop-daemon-stack $1 $4
-PassEnvironment=FATC_DAEMONS
-PassEnvironment=FATC_DAEMONS_SOCKETS
-PassEnvironment=FATC_COMPOSE
-PassEnvironment=FATC_TIMEOUT_SOCKETS
-RemainAfterExit=true
-EOF
-    systemctl enable "$name"
-}
-
-
-fatc_configure_service_service () {
-    local name unit_path
-    name="fatc.service.${1}"
-    unit_path="${FATC_SYSTEMD}/${name}.service"
-    cat > "$unit_path" <<EOF
-[Unit]
-Description=Service service: $1
-Requires=configuration.service $5
-After=configuration.service $5
-[Install]
-WantedBy=fatc.target
-[Service]
-ExecStart=/usr/bin/fatctl start-service-stack $1 $4
-ExecStartPost=/usr/bin/fatctl wait-service-stack 0.5 $1 "$2" $3
-ExecStop=/usr/bin/fatctl stop-service-stack $1 $4
+ExecStart=/usr/bin/fatctl start-${1}-stack $2 $5
+ExecStartPost=/usr/bin/fatctl wait-${1}-stack 0.5 $2 "$3" $4
+ExecStop=/usr/bin/fatctl stop-${1}-stack $2 $5
 PassEnvironment=FATC_SERVICES
 PassEnvironment=FATC_SERVICES_SOCKETS
 PassEnvironment=FATC_COMPOSE
@@ -163,9 +150,7 @@ fatc_get_upstream_address () {
 
 fatc_configure_track () {
     local config compose healthy index line listen \
-	  private_network result \
-	  services stack_name stack_type \
-	  upstream
+	  result services stack_name stack_type upstream
     stack_type=$1
     stack_name=$2
     index=$3
@@ -173,14 +158,7 @@ fatc_configure_track () {
     listen=$(echo "${track}" | jq -r ".listen // empty")
     upstream=$(echo "${track}" | jq -r ".upstream // empty")
     result=()
-    private_network=no
-    if [[ "$upstream" = ":unix:" && "$listen" = ":unix:" ]]; then
-	private_network=yes
-    fi
-    upstream=$(fatc_get_upstream_address "$upstream" "$stack_type" "$stack_name" "$index")
-    listen=$(fatc_get_listen_address "$listen" "$stack_name" "$index")
-    fatc_configure_proxy_service "$stack_type" "$stack_name" "$index" "$upstream" "$private_network"
-    fatc_configure_proxy_socket "$stack_type" "$stack_name" "$index" "$listen"
+    fatc_configure_proxy_socket "$stack_type" "$stack_name" "$index" "$listen" "$upstream"
     result+=("${stack_type}.${stack_name}: <- $listen")
     compose=$(fatc_get_stack_compose "$stack_type" "$stack_name")
     if [ -f "$compose" ]; then
@@ -249,7 +227,7 @@ fatc_configure_composition () {
     for dependency in $depends_on; do
 	depends="${depends} fatc.daemon.${dependency}.service"
     done
-    fatc_configure_"$stack_type"_service "$stack_name" "$healthy" "$upstream" "$use_criu" "$depends"
+    fatc_configure_systemd_service "$stack_type" "$stack_name" "$healthy" "$upstream" "$use_criu" "$depends"
     if [[ "$track_count" = 0 && "$stack_type" = "daemon" ]]; then
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
 	fatc_log "daemon.${stack_name}: docker: ${services%%*( )}"
@@ -371,14 +349,13 @@ fatc_configure () {
     export -f fatc_configure_proxy_service
     export -f fatc_configure_proxy_socket
     # export -f fatc_configure_update_services
+    export -f fatc_configure_systemd_service
 
     export -f fatc_configure_service
-    export -f fatc_configure_service_service
     export -f fatc_configure_service_idle
     export -f fatc_configure_start_service
 
     export -f fatc_configure_daemon
-    export -f fatc_configure_daemon_service
     export -f fatc_configure_isolated_daemon
     export -f fatc_configure_start_daemon
     export -f fatc_log
