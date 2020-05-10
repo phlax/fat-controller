@@ -48,6 +48,7 @@ Description=Proxy $1 service: $2.$3
 Requires=fatc.$1.$2.service
 After=fatc.$1.$2.service
 [Service]
+User=fatc
 ExecStart=/usr/bin/fatctl start-proxy $1 $2 $3 $4
 PrivateTmp=yes
 EOF
@@ -83,6 +84,7 @@ After=configuration.service ${depends}
 [Install]
 WantedBy=fatc.target
 [Service]
+User=fatc
 ExecStart=/usr/bin/fatctl start-${stack_type}-stack ${stack_name} ${use_criu}
 ExecStartPost=/usr/bin/fatctl wait-${1}-stack 0.5 ${stack_name} "${healthy}" ${upstream}
 ExecStop=/usr/bin/fatctl stop-${stack_type}-stack ${stack_name} ${use_criu}
@@ -111,6 +113,7 @@ Description=Service service: $1.$2
 [Install]
 WantedBy=fatc.target
 [Service]
+User=fatc
 ExecStart=/usr/bin/fatctl start-backend $1
 ExecStartPost=/usr/bin/fatctl wait-backend 0.5 $1 $2 "$3" $4
 ExecStop=/usr/bin/fatctl stop-backend $1
@@ -364,7 +367,6 @@ fatc_configure () {
     export -f fatc_configure_start_service
 
     export -f fatc_configure_daemon
-    export -f fatc_configure_isolated_daemon
     export -f fatc_configure_start_daemon
     export -f fatc_log
     export -f fatc_log_warn
