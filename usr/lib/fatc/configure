@@ -42,30 +42,6 @@ EOF
 }
 
 
-fatc_configure_isolated_daemon () {
-    local name unit_path
-    name="fatc.daemon.${1}"
-    unit_path="${FATC_SYSTEMD}/${name}.service"
-    cat > "$unit_path" <<EOF
-[Unit]
-Description=Daemon service: $1
-Requires=configuration.service $2
-After=configuration.service $2
-
-[Install]
-WantedBy=fatc.target
-[Service]
-ExecStart=/usr/bin/fatctl start-daemon-stack $1
-ExecStop=/usr/bin/fatctl stop-daemon-stack $1
-PassEnvironment=FATC_DAEMONS
-PassEnvironment=FATC_DAEMONS_SOCKETS
-PassEnvironment=FATC_COMPOSE
-RemainAfterExit=true
-EOF
-    systemctl enable "$name"
-}
-
-
 fatc_configure_daemon_service () {
     local name unit_path
     name="fatc.daemon.${1}"
@@ -275,13 +251,10 @@ fatc_configure_composition () {
     for dependency in $depends_on; do
 	depends="${depends} fatc.daemon.${dependency}.service"
     done
+    fatc_configure_"$stack_type"_service "$stack_name" "$healthy" "$upstream" "$use_criu" "$depends"
     if [[ "$track_count" = 0 && "$stack_type" = "daemon" ]]; then
-	fatc_configure_isolated_daemon "$stack_name" "$depends"
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
 	fatc_log "daemon.${stack_name}: docker: ${services%%*( )}"
-    else
-	fatc_configure_"$stack_type"_service "$stack_name" "$healthy" "$upstream" "$use_criu" "$depends"
-	# fatc_configure_update_services "$stack_type" "$stack_name" "$index" "$listen" "$upstream" "$services"
     fi
     if [ "$stack_type" = "service" ]; then
 	idle_fun=$(echo "$config" | jq -cr ".idle // empty")

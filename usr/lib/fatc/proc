@@ -176,7 +176,6 @@ fatc_stack_daemon_wait () {
 	export UPSTREAM="$ip:$port"
     fi
     command=$(echo "$3" | envsubst '${UPSTREAM}')
-    echo "WAIT COMMAND: $command"
     until $command; do
 	sleep "$1"
 	now=$(date +%s)
