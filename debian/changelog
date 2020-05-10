@@ -1,4 +1,10 @@
-fatc (0.0.27) UNRELEASED; urgency=medium
+fatc (0.0.28) UNRELEASED; urgency=medium
+
+  * Update healthcheck configuration
+
+ -- Ryan Northey <ryan@synca.io>  Sun, 10 May 2020 12:26:16 +0100
+
+fatc (0.0.27) buster; urgency=medium
 
   * Remove isolated_daemon config
   * Enable health check for isolated daemons
