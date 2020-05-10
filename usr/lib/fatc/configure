@@ -172,27 +172,25 @@ fatc_configure_track () {
     track=$(echo "${4}" | base64 --decode)
     listen=$(echo "${track}" | jq -r ".listen // empty")
     upstream=$(echo "${track}" | jq -r ".upstream // empty")
-    healthy=$(echo "${track}" | jq -r ".healthy // empty")
     result=()
     private_network=no
     if [[ "$upstream" = ":unix:" && "$listen" = ":unix:" ]]; then
 	private_network=yes
     fi
-
     upstream=$(fatc_get_upstream_address "$upstream" "$stack_type" "$stack_name" "$index")
     listen=$(fatc_get_listen_address "$listen" "$stack_name" "$index")
     fatc_configure_proxy_service "$stack_type" "$stack_name" "$index" "$upstream" "$private_network"
     fatc_configure_proxy_socket "$stack_type" "$stack_name" "$index" "$listen"
     result+=("${stack_type}.${stack_name}: <- $listen")
-
     compose=$(fatc_get_stack_compose "$stack_type" "$stack_name")
     if [ -f "$compose" ]; then
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
 	result+=("${stack_type}.${stack_name}: -> docker: $upstream (${services%%*( )})")
     fi
     if [[ ! -f "$compose" || $index != 0 ]]; then
-	fatc_configure_backend "$stack_name" "$index" "$healthy" "$upstream"
 	result+=("${stack_type}.${stack_name}: -> $upstream")
+	healthy=$(echo "${track}" | jq -r ".healthy // empty")
+	fatc_configure_backend "$stack_name" "$index" "$healthy" "$upstream"
     fi
     for line in "${result[@]}"; do
 	fatc_log "$line"
@@ -225,7 +223,7 @@ fatc_configure_tracks () {
 
 
 fatc_configure_composition () {
-    local compose dependency depends depends_on idle_fun \
+    local compose dependency depends depends_on healthy idle_fun \
 	  stack_name stack_type \
 	  services track_count use_criu
     stack_type="$1"
@@ -239,7 +237,7 @@ fatc_configure_composition () {
 		--arg stack_type "${stack_type}s" \
 		"$FATC_STACK_CONFIG" \
 		"$FATC_CONFIG")
-    healthy=$(echo "$config" | jq -cr ".tracks // [] | .[0] // {} | .healthy")
+    healthy=$(echo "$config" | jq -cr ".healthy")
     upstream=$(echo "$config" | jq -cr ".tracks // [] | .[0] // {} | .upstream")
     track_count=$(echo "$config" | jq -cr ".tracks // [] | length")
     if [ "$upstream" = ":unix:" ]; then
