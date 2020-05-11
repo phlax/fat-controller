@@ -1,4 +1,10 @@
-fatc (0.0.30) UNRELEASED; urgency=medium
+fatc (0.0.31) UNRELEASED; urgency=medium
+
+  * Merge proxy functions
+
+ -- Ryan Northey <ryan@synca.io>  Mon, 11 May 2020 10:41:18 +0100
+
+fatc (0.0.30) buster; urgency=medium
 
   * Use fatc user for systemd units
   * Remove obsolete function export
