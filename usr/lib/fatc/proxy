@@ -5,23 +5,12 @@
 
 
 fatc_proxy_start () {
-    local address backend ip network port upstream
-    upstream=$4
-    if [[ "$upstream" = :backend:* ]]; then
+    local backend upstream
+    if [[ "$5" = :backend:* ]]; then
 	backend=$(fatc_backend_resolve "${@}")
-	upstream="${4//:backend:/$backend:}"
-    elif [[ $upstream = :* ]]; then
-	# TODO: FIX TIMEOUT
-	network=$(echo "$upstream" | cut -d: -f2)
-	address=$(echo "$upstream" | cut -d: -f3)
-	port=$(echo "$upstream" | cut -d: -f4)
-	until [ -n "$ip" ]; do
-	    ip=$(fatc_stack_resolve "$network" "$address")
-	    if [ -z "$ip" ]; then
-		sleep .5
-	    fi
-	done
-	upstream="$ip:$port"
+	upstream="${5//:backend:/${backend}:}"
+    else
+	upstream=$(fatc_get_upstream "$5" "$1")
     fi
     exec /lib/systemd/systemd-socket-proxyd "$upstream"
 }
