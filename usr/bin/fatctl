@@ -35,10 +35,9 @@ usage () {
 
     stop                    Stop fatc
     stop-backend            Stop backend track
-    stop-daemon-stack       Stop daemon's container stack
     stop-idle               Stop idle services
     stop-proxy              Stop proxy track
-    stop-service-stack      Stop service's container stack
+    stop-stack              Stop container stack
 
     wait-backend            Wait for backend to become ready
     wait-stack              Wait for stack to become ready
@@ -93,14 +92,11 @@ case $ARG in
     stop-backend )
         fatc_backend_stop "${@}"
         ;;
-    stop-daemon-stack )
-        fatc_stack_daemon_stop "${@}"
-        ;;
     stop-idle )
         fatc_idle_stop
         ;;
-    stop-service-stack )
-        fatc_stack_service_stop "${@}"
+    stop-stack )
+        fatc_stack_stop "${@}"
         ;;
     wait-backend )
         fatc_backend_wait "${@}"

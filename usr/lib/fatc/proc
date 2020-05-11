@@ -4,26 +4,6 @@
 . /usr/lib/fatc/common
 
 
-function fatc_stack_service_stop () {
-    local compose compose_file
-    services=${3:1:-1}
-    if [[ -n "$FATC_USE_CRIU" && "$FATC_USE_CRIU" != "false" ]]; then
-	if [[ -n "$3" && "$3" != "false" ]]; then
-	    fatc_stack_checkpoint "service_$1" "$3"
-	fi
-    fi
-    compose_file=$FATC_SERVICES/$1/docker-compose.yml
-    compose="$FATC_COMPOSE \
-	   	    -p service_$1 \
-		    -f $compose_file \
-		    --skip-hostname-check \
-		    --no-ansi"
-    for service in $($compose config --services); do
-	$compose stop "$service"
-    done
-}
-
-
 fatc_stack_restore () {
     services=${2:1:-1}
     for container in ${services//,/ } ; do
@@ -70,7 +50,7 @@ function fatc_stack_clear_socket () {
 
 
 function fatc_stack_start () {
-    local compose compose_file stack_name stack_type use_criu
+    local compose stack_name stack_type use_criu
     stack_type="$1"
     stack_name="$2"
     use_criu="$3"
@@ -87,12 +67,19 @@ function fatc_stack_start () {
 }
 
 
-
-function fatc_stack_daemon_stop () {
-    DC_FILE="$FATC_DAEMONS/${1}/docker-compose.yml"
-    DC="$FATC_COMPOSE -p daemon_${1} -f ${DC_FILE} --skip-hostname-check --no-ansi"
-    $DC down
-    fatc_log "Daemon stack stopped $1"
+function fatc_stack_stop () {
+    local compose stack_name stack_type use_criu
+    stack_type="$1"
+    stack_name="$2"
+    use_criu="$3"
+    if [[ -n "$FATC_USE_CRIU" && "$FATC_USE_CRIU" != "false" ]]; then
+	if [[ -n "$use_criu" && "$use_criu" != "false" ]]; then
+	    fatc_stack_checkpoint "service_${stack_type}_${stack_name}" "$use_criu"
+	fi
+    fi
+    compose=$(fatc_get_stack_compose_command "$stack_type" "$stack_name")
+    $compose down
+    fatc_log "Stack stopped ${stack_type}/${stack_name}"
 }
 
 
