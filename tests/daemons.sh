@@ -13,6 +13,7 @@ docker-compose up -d
 $D0_STATUS.0--proxy.socket -p ActiveState | grep -v inactive | grep active
 $D0_STATUS.0--proxy -p ActiveState | grep inactive
 $D0_STATUS -p ActiveState | grep -v inactive | grep active
+$D0_STATUS -n200 | grep STARTED
 
 ## unix socket for daemon0 is responding to http requests
 $CURL --unix-socket ./example/sockets/fc/daemon0.0.sock http://localhost | grep Hello | grep backend | grep unix

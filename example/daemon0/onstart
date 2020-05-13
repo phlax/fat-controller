@@ -1,0 +1,3 @@
+#!/bin/bash
+
+echo "GREAT STARTED DAEMON0!"

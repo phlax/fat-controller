@@ -20,6 +20,7 @@
     "daemons": {
 	"daemon0": {
 	    "healthy": "curl --output /dev/null --silent --head --fail --unix-socket $UPSTREAM http://localhost/",
+	    "onstart": "./onstart",
 	    "tracks": [
 		{"listen": ":unix:",
 		 "upstream": ":unix:"}
