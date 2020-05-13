@@ -45,6 +45,7 @@ $FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep '^fatc\.da
 ## networks
 $FC_EXEC docker network ls | grep fatc_proxy
 $FC_EXEC docker network inspect fatc_proxy | jq -cr '.[].IPAM.Config[].Subnet' | grep "10.0.23.0/24"
+$FC_EXEC docker network inspect fatc_proxy | jq -cr '.[].IPAM.Config[].Gateway' | grep "10.0.23.7"
 
 $FC_EXEC docker network ls | grep fatc_network1
 $FC_EXEC docker network ls | grep fatc_network2

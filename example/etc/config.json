@@ -1,7 +1,8 @@
 {
     "networks": {
 	"proxy": {
-	    "subnet": "10.0.23.0/24"
+	    "subnet": "10.0.23.0/24",
+	    "gateway": "10.0.23.7"
 	},
 	"upstream": {
 	    "subnet": "10.0.73.0/24"
