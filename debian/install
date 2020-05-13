@@ -3,3 +3,4 @@ etc/systemd/system/* etc/systemd/system/
 etc/criu etc
 usr/bin/* usr/bin
 usr/lib/fatc usr/lib
+etc/sudoers.d etc
