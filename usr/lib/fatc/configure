@@ -57,13 +57,14 @@ EOF
 
 fatc_configure_systemd_service () {
     local config dependency depends depends_on \
-	  healthy name stack_name stack_type \
+	  healthy name onstart stack_name stack_type \
 	  unit_path upstream use_criu
     stack_type="$1"
     stack_name="$2"
     config="$3"
     name="fatc.${1}.${2}"
     healthy=$(echo "$config" | jq -cr ".healthy")
+    onstart=$(echo "$config" | jq -cr ".onstart // empty")
     upstream=$(echo "$config" | jq -cr ".tracks // [] | .[0] // {} | .upstream")
     if [ "$upstream" = ":unix:" ]; then
 	upstream=$(fatc_get_upstream_socket "$stack_type" "$stack_name" 0)
@@ -86,7 +87,7 @@ WantedBy=fatc.target
 [Service]
 User=fatc
 ExecStart=/usr/bin/fatctl start-stack ${stack_type} ${stack_name} ${use_criu}
-ExecStartPost=/usr/bin/fatctl wait-stack 0.5 "${healthy}" ${upstream}
+ExecStartPost=/usr/bin/fatctl wait-stack ${stack_type} ${stack_name} 0.5 "${healthy}" ${upstream} "${onstart}"
 ExecStop=/usr/bin/fatctl stop-stack ${stack_type} ${stack_name} ${use_criu}
 PassEnvironment=FATC_DAEMONS
 PassEnvironment=FATC_DAEMONS_SOCKETS

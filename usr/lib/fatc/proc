@@ -84,15 +84,31 @@ function fatc_stack_stop () {
 
 
 fatc_stack_wait () {
-    local cmd start upstream UPSTREAM
+    local cmd healthy stack_dir stack_name stack_type \
+	  start step upstream UPSTREAM
+    stack_type="$1"
+    stack_name="$2"
+    step="$3"
+    healthy="$4"
+    upstream="$5"
+    onstart="$6"
     start=$(date +%s)
-    if [[ -z "$2" || "$2" = null ]]; then
+    stack_dir=$(fatc_get_stack_dir "$stack_type")
+    cd "${stack_dir}/${stack_name}"
+    if [[ -z "$healthy" || "$healthy" = null ]]; then
+	if [ -n "$onstart" ];then
+	    $onstart
+	fi
 	return
     fi
-    upstream=$(fatc_get_upstream "$3" "$1")
+    upstream=$(fatc_get_upstream "$upstream" "$step")
     export UPSTREAM="$upstream"
-    cmd=$(echo "$2" | envsubst '${UPSTREAM}' | base64)
-    fatc_wait_for "$cmd" "$start" "$1" "$FATC_TIMEOUT_SOCKETS"
+    cmd=$(echo "$healthy" | envsubst '${UPSTREAM}' | base64)
+    if fatc_wait_for "$cmd" "$start" "$step" "$FATC_TIMEOUT_SOCKETS";then
+	if [ -n "$onstart" ];then
+	    $onstart
+	fi
+    fi
 }
 
 
