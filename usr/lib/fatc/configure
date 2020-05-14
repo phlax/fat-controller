@@ -187,8 +187,7 @@ fatc_configure_track () {
     if [ -f "$compose" ]; then
 	services=$(fatc_get_stack_services "$stack_type" "$stack_name")
 	result+=("${stack_type}.${stack_name}: -> docker: $upstream (${services%%*( )})")
-    fi
-    if [[ ! -f "$compose" || $index != 0 ]]; then
+    else
 	result+=("${stack_type}.${stack_name}: -> $upstream")
 	healthy=$(echo "${track}" | jq -r ".healthy // empty")
 	fatc_configure_backend "$stack_name" "$index" "$healthy" "$upstream"
