@@ -221,7 +221,7 @@ fatc_stack_resolve () {
 
 fatc_create_user () {
     if id "$FATC_USER" > /dev/null 2>&1; then
-	dc_log_warn "User ($FATC_USER) already exists"
+	fatc_log_warn "User ($FATC_USER) already exists"
 	return
     fi
     adduser \
