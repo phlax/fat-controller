@@ -1,7 +1,7 @@
 [Unit]
 Description=Controller service
-Requires=configuration.service idle.timer
-After=configuration.service idle.timer
+Requires=fatc.configuration.service fatc.idle.timer
+After=fatc.configuration.service fatc.idle.timer
 
 [Service]
 ExecStart=/usr/bin/fatctl start

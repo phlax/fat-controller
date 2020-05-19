@@ -9,7 +9,7 @@ docker-compose up -d
 docker-compose logs fatc
 
 $FC_STATUS
-$FC_STATUS -n500 configuration
+$FC_STATUS -n500 fatc.configuration
 $FC_STATUS fatc -p ActiveState | grep -v inactive | grep active
 
 
@@ -17,7 +17,7 @@ $FC_STATUS fatc -p ActiveState | grep -v inactive | grep active
 $FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep '^fatc\.service' | tr '\n\r' '\n' | grep "^fatc\.service$"
 
 ## configuration service
-$FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep '^configuration\.service' | tr '\n\r' '\n' | grep "^configuration\.service$"
+$FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep '^fatc\.configuration\.service' | tr '\n\r' '\n' | grep "^fatc\.configuration\.service$"
 
 ## idle timer and service
 $FC_EXEC ls -l /etc/systemd/system | rev | cut -d' ' -f1 | rev | grep idle

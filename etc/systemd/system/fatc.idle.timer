@@ -1,6 +1,6 @@
 [Unit]
 Description=Idle fatc timer
-Requires=idle.service
+Requires=fatc.idle.service
 
 [Timer]
 AccuracySec=1sec

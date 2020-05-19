@@ -80,8 +80,8 @@ fatc_configure_systemd_service () {
     cat > "$unit_path" <<EOF
 [Unit]
 Description=Fatc ${stack_type}: ${stack_name}
-Requires=configuration.service ${depends}
-After=configuration.service ${depends}
+Requires=fatc.configuration.service ${depends}
+After=fatc.configuration.service ${depends}
 [Install]
 WantedBy=fatc.target
 [Service]
