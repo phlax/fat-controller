@@ -1,4 +1,10 @@
-fatc (0.0.36) UNRELEASED; urgency=medium
+fatc (0.0.37) UNRELEASED; urgency=medium
+
+  * Cleanups systemd units and namespacing
+
+ -- Ryan Northey <ryan@synca.io>  Tue, 19 May 2020 21:15:25 +0100
+
+fatc (0.0.36) buster; urgency=medium
 
   * Timer start 10s after last run exits
 
