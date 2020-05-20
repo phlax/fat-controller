@@ -68,20 +68,22 @@ fatc_idle_check () {
 
 
 fatc_idle_stop () {
-    local services
-    export -f fatc_log
-    export -f fatc_log_warn
-    export -f fatc_log_err
-    export -f fatc_get_last_activity
-    export -f fatc_get_service_idle
-    export -f fatc_get_stack_dir
-    export -f fatc_get_stack_compose
-    export -f fatc_get_stack_compose_command
-    export -f fatc_service_uptime
-    export -f fatc_idle_check
-    export -f fatc_idle_check_service
+    local active services
     services=$(fatc_idle_services)
-    active=$(fatc_active service)
-    # shellcheck disable=SC2086
-    parallel -i bash -c "fatc_idle_check {} $services" -- $active
+    if [ -n "$services" ]; then
+	active=$(fatc_active service)
+	export -f fatc_log
+	export -f fatc_log_warn
+	export -f fatc_log_err
+	export -f fatc_get_last_activity
+	export -f fatc_get_service_idle
+	export -f fatc_get_stack_dir
+	export -f fatc_get_stack_compose
+	export -f fatc_get_stack_compose_command
+	export -f fatc_service_uptime
+	export -f fatc_idle_check
+	export -f fatc_idle_check_service
+	# shellcheck disable=SC2086
+	parallel -i bash -c "fatc_idle_check {} $services" -- $active
+    fi
 }
