@@ -1,4 +1,10 @@
-fatc (0.0.37) UNRELEASED; urgency=medium
+fatc (0.0.38) UNRELEASED; urgency=medium
+
+  * Optimization exit idle service if nothing configured
+
+ -- Ryan Northey <ryan@synca.io>  Wed, 20 May 2020 05:16:59 +0100
+
+fatc (0.0.37) buster; urgency=medium
 
   * Cleanups systemd units and namespacing
 
