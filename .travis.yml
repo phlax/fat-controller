@@ -28,6 +28,7 @@ script:
   - pysh ./tests/system.sh
   - pysh ./tests/daemons.sh
   - pysh ./tests/services.sh
+  - pysh ./tests/reconfigure.sh
 
   - shellcheck -x usr/lib/fatc/*
   - shellcheck -x usr/bin/*
