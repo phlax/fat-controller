@@ -26,6 +26,7 @@ usage () {
 
     install                 Install docker-compose environment and other setup ?
     configure               Configure systemd units from fatctl config
+    deconfigure             De-configure fatc systemd units
     resolve                 Resolve the IP for a container service
 
     cleanup-stack           Cleanup container stack
@@ -43,6 +44,7 @@ usage () {
 
     templates               Manage templates
 
+    wait-configure	    Wait for configuration to complete
     wait-backend            Wait for backend to become ready
     wait-stack              Wait for stack to become ready
 
@@ -123,6 +125,9 @@ case $ARG in
         ;;
     wait-backend )
         fatc_backend_wait "${@}"
+        ;;
+    wait-configure )
+        fatc_configure_wait "${@}"
         ;;
     wait-stack )
         fatc_stack_wait "${@}"

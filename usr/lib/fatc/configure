@@ -368,6 +368,22 @@ fatc_configure () {
     fatc_configure_volumes
     fatc_configure_parallel configure daemon
     fatc_configure_parallel configure service
+    fatc_log "Fatc configured"
+}
+
+
+fatc_deconfigure () {
+    echo "DECONFIGURING FATC SERVICES AND DAEMONS"
+    ls /etc/systemd/system
+
+    ls /etc/systemd/system/*socket
+}
+
+
+fatc_configure_wait () {
+    echo "WAITING FOR CONFIGURATION TO COMPLETE"
+    sleep 10
+    echo "DONE WAITING"
 }
 
 

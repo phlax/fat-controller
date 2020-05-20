@@ -287,3 +287,16 @@ fatc_get_upstream () {
 	echo "$1"
     fi
 }
+
+
+fatc_configure_parallel () {
+    local dir stack_type runtype
+    runtype="$1"
+    stack_type="$2"
+    dir=$(fatc_get_stack_dir "$stack_type")
+    if [ -d "$dir" ]; then
+	fatc_parallel "fatc_ls_dirs ${dir}" "fatc_${runtype}_${stack_type}"
+    else
+	fatc_log "No ${stack_type}s to ${runtype}"
+    fi
+}

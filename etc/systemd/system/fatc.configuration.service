@@ -11,6 +11,8 @@ ExecStop=/bin/echo "stopping fatc configuration"
 ExecStopPost=/usr/bin/fatctl deconfigure
 PrivateTmp=false
 RemainAfterExit=true
+ExecStop=/usr/bin/fatctl deconfigure
+Type=oneshot
 PassEnvironment=FATC_SYSTEMD
 PassEnvironment=FATC_COMPOSE
 PassEnvironment=FATC_PROXY_SOCKETS
@@ -21,6 +23,3 @@ PassEnvironment=FATC_DAEMONS_SOCKETS
 PassEnvironment=FATC_SERVICES
 PassEnvironment=FATC_SERVICES_SOCKETS
 PassEnvironment=FATC_IDLE
-
-[Install]
-WantedBy=multi-user.target
