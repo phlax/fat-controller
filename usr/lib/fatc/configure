@@ -17,10 +17,10 @@ fatc_configure_proxy_socket () {
     listen="$4"
     upstream="$5"
     private_network=no
-    if [[ "$upstream" = ":unix:" && "$listen" = ":unix:" ]]; then
+    if [[ "$upstream" = :unix:* && "$listen" = ":unix:" ]]; then
 	private_network=yes
     fi
-    upstream=$(fatc_get_upstream_address "$upstream" "$stack_type" "$stack_name" "$index")
+    upstream=$(fatc_get_upstream_address "$stack_type" "$stack_name" "$upstream")
     listen=$(fatc_get_listen_address "$listen" "$stack_name" "$index")
     fatc_configure_proxy_service "$stack_type" "$stack_name" "$index" "$upstream" "$private_network"
     protocol=ListenStream
@@ -66,8 +66,8 @@ fatc_configure_systemd_service () {
     healthy=$(echo "$config" | jq -cr ".healthy")
     onstart=$(echo "$config" | jq -cr ".onstart // empty")
     upstream=$(echo "$config" | jq -cr ".tracks // [] | .[0] // {} | .upstream")
-    if [ "$upstream" = ":unix:" ]; then
-	upstream=$(fatc_get_upstream_socket "$stack_type" "$stack_name" 0)
+    if [[ "$upstream" = :unix:* ]]; then
+	upstream=$(fatc_get_upstream_socket "$stack_type" "$stack_name" "$upstream")
     fi
     use_criu=$(echo "$config" | jq -cr ".use_criu // false")
     depends_on=$(echo "$config" | jq -cr '.depends_on // [] | join (" ")')
@@ -86,7 +86,7 @@ After=fatc.configuration.service ${depends}
 WantedBy=fatc.target
 [Service]
 User=fatc
-ExecStart=/usr/bin/fatctl start-stack ${stack_type} ${stack_name} ${use_criu}
+ExecStart=/usr/bin/fatctl start-stack ${stack_type} ${stack_name} ${upstream} ${use_criu}
 ExecStartPost=/usr/bin/fatctl wait-stack ${stack_type} ${stack_name} 0.5 "${healthy}" ${upstream} "${onstart}"
 ExecStop=/usr/bin/fatctl stop-stack ${stack_type} ${stack_name} ${use_criu}
 PassEnvironment=FATC_DAEMONS
@@ -163,10 +163,10 @@ fatc_get_listen_address () {
 
 
 fatc_get_upstream_address () {
-    if [ "$1" = ":unix:" ]; then
-	fatc_get_upstream_socket "$2" "$3" "$4"
+    if [[ "$3" = :unix:* ]]; then
+	fatc_get_upstream_socket "$1" "$2" "$3"
     else
-	echo "$1"
+	echo "$3"
     fi
 }
 

@@ -138,12 +138,17 @@ fatc_get_stack_compose_command () {
 
 
 fatc_get_upstream_socket () {
-    local index sockets_dir stack_type stack_name
+    local sockets_dir socket_path stack_type stack_name
     stack_type="$1"
     stack_name="$2"
-    index="$3"
+    upstream="$3"
     sockets_dir=$(fatc_get_sockets_dir "$stack_type")
-    echo "${sockets_dir}/${stack_name}/${stack_type}.sock"
+    socket_path=$(echo "$upstream" | cut -d: -f3)
+    if [ -n "$socket_path" ]; then
+	echo "${sockets_dir}/${stack_name}/${socket_path}"
+    else
+	echo "${sockets_dir}/${stack_name}/${stack_type}.sock"
+    fi
 }
 
 

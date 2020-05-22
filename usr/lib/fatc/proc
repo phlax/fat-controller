@@ -41,7 +41,7 @@ fatc_stack_checkpoint () {
 
 function fatc_stack_clear_socket () {
     local socket
-    socket=$(fatc_get_upstream_socket "$1" "$2")
+    socket=$(fatc_get_upstream_socket "$1" "$2" "$3")
     if [ -S "$socket" ]; then
 	fatc_log_warn "Removing stale socket: $socket"
         rm "$socket"
@@ -50,11 +50,12 @@ function fatc_stack_clear_socket () {
 
 
 function fatc_stack_start () {
-    local compose stack_name stack_type use_criu
+    local compose stack_name stack_type upstream use_criu
     stack_type="$1"
     stack_name="$2"
-    use_criu="$3"
-    fatc_stack_clear_socket "$stack_type" "$stack_name"
+    upstream="$3"
+    use_criu="$4"
+    fatc_stack_clear_socket "$stack_type" "$stack_name" "$upstream"
     compose=$(fatc_get_stack_compose_command "$stack_type" "$stack_name")
     if [[ -n "$FATC_USE_CRIU" && "$FATC_USE_CRIU" != "false" ]]; then
 	if [[ -n "$use_criu" && "$use_criu" != "false" ]]; then
