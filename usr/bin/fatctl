@@ -25,6 +25,7 @@ usage () {
     Internal commands, used in systemd units or for installation:
 
     install                 Install docker-compose environment and other setup ?
+    cleanup                 Cleanup ephemeral configurations
     configure               Configure systemd units from fatctl config
     resolve                 Resolve the IP for a container service
 
@@ -45,6 +46,7 @@ usage () {
 
     wait-backend            Wait for backend to become ready
     wait-stack              Wait for stack to become ready
+    wait-stop               Wait for sockets to stop listening
 
 EOF
 }
@@ -123,6 +125,9 @@ case $ARG in
         ;;
     wait-stack )
         fatc_stack_wait "${@}"
+        ;;
+    wait-stop )
+        fatc_stop_wait "${@}"
         ;;
     * )
         usage

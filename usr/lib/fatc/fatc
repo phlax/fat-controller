@@ -51,5 +51,23 @@ fatc_start () {
 
 fatc_stop () {
     fatc_log "Fatc stopped"
+
+    for socket in ls_files /etc/systemd/system/fatc.*--proxy.socket; do
+	echo "STOPPING SOCKET $socket"
+    done
+    echo "START WAITING FOR SOCKETS TO STOP LISTENING"
+    sleep 10
+    echo "FINISH WAITING FOR SOCKETS TO STOP LISTENING"
+}
+
+
+fatc_stop_wait () {
+    echo "TOTALLY STOPPED WAITING FOR SOCKETS"
+}
+
+
+fatc_cleanup () {
+    echo "FATC CLEANUP: make sure all containers have been stopped!"
+    docker ps
     docker container prune -f && docker network prune -f && docker volume prune -f && docker image prune -f
 }

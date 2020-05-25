@@ -50,6 +50,9 @@ Requires=fatc.$1.$2.service
 After=fatc.$1.$2.service
 Requires=fatc.${1}.${2}.${3}--proxy.socket
 After=fatc.${1}.${2}.${3}--proxy.socket
+Before=fatc.service
+[Install]
+RequiredBy=fatc.service
 [Service]
 User=fatc
 ExecStart=/usr/bin/fatctl start-proxy .5 $1 $2 $3 $4
@@ -85,8 +88,10 @@ fatc_configure_systemd_service () {
 Description=Fatc ${stack_type}: ${stack_name}
 Requires=fatc.configuration.service ${depends}
 After=fatc.configuration.service ${depends}
+Before=fatc.service
 [Install]
 WantedBy=fatc.target
+RequiredBy=fatc.service
 [Service]
 User=fatc
 ExecStart=/usr/bin/fatctl start-stack ${stack_type} ${stack_name} ${upstream} ${use_criu}

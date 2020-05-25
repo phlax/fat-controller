@@ -184,6 +184,11 @@ fatc_ls_dirs () {
 }
 
 
+fatc_ls_files () {
+    find "$1" -maxdepth 1 -mindepth 1 -name '*' -type f -printf '%f\n'
+}
+
+
 fatc_parallel () {
     local cores
     cores=$(grep -F -c processor /proc/cpuinfo)

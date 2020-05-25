@@ -7,6 +7,7 @@ After=fatc.configuration.service fatc.idle.timer
 ExecStartPre=/usr/bin/fatctl start
 ExecStart=/bin/echo "fatc started"
 ExecStop=/usr/bin/fatctl stop
+ExecStopPost=/usr/bin/fatctl wait-stop
 PrivateTmp=true
 RemainAfterExit=true
 TimeoutStopSec=infinity
