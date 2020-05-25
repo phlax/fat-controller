@@ -83,5 +83,11 @@ stackhash=$($FC_EXEC hashtree -i ".tpls/*" -c .tpls/ignore hash /var/lib/fatc/te
 $FC_EXEC fatctl templates pull
 $FC_EXEC fatctl templates list | grep "$stackhash"
 
+## stop
+$FC_EXEC systemctl stop fatc.configuration
+
+$FC_STATUS -n1000 fatc.configuration | tail -n 500
+
+$FC_EXEC journalctl -xe --no-pager -l -n1000 | tail -n 500
 
 docker-compose down
