@@ -4,7 +4,8 @@ Requires=fatc.configuration.service fatc.idle.timer
 After=fatc.configuration.service fatc.idle.timer
 
 [Service]
-ExecStart=/usr/bin/fatctl start
+ExecStartPre=/usr/bin/fatctl start
+ExecStart=/bin/echo "fatc started"
 ExecStop=/usr/bin/fatctl stop
 PrivateTmp=true
 RemainAfterExit=true

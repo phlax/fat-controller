@@ -4,8 +4,10 @@ Requires=docker.service
 After=docker.service
 
 [Service]
-ExecStart=/usr/bin/fatctl configure
-PrivateTmp=true
+ExecStartPre=/usr/bin/fatctl render
+ExecStartPre=/usr/bin/fatctl configure
+ExecStart=/bin/echo "fatc configured"
+PrivateTmp=false
 RemainAfterExit=true
 PassEnvironment=FATC_SYSTEMD
 PassEnvironment=FATC_COMPOSE
