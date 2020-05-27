@@ -1,0 +1,33 @@
+version: "2.4"
+
+services:
+  app:
+    image: busybox
+    depends_on:
+      http:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  http:
+    image: nginx
+    depends_on:
+      - redis
+    volumes:
+      - $TPL_FATC_LIB_PATH/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - $TPL_FATC_LIB_PATH/index.html:/usr/share/nginx/html/index.html:ro
+      $TPL_EXTRA_VOLUME
+    networks: $TPL_SERVICE_NETWORKS
+    healthcheck:
+      interval: 10s
+      retries: 20
+      test: "service nginx status || exit 1"
+
+  redis:
+    image: redis
+    healthcheck:
+      interval: 10s
+      retries: 20
+      test: "redis-cli ping | grep PONG"
+
+networks: $TPL_NETWORKS

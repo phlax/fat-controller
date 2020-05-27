@@ -1,0 +1,14 @@
+#!/bin/bash -e
+
+
+grep_lastlog () {
+    local lastlog tstamp offset
+    # this takes the nginx log from the services docker-compose logs
+    # the date is parsed and converted to unix timestamp
+    lastlog=$($COMPOSE logs http | grep "^http_1" | tail -n1 | cut -d'|' -f2 | cut -d'[' -f2 | cut -d']' -f1)
+    tstamp=$(echo $lastlog | cut -d+ -f1)
+    offset=$(echo $lastlog | cut -d+ -f2)
+    dateutils.dconv -i "%d/%b/%Y:%T" -f "%rs" "$tstamp+${offset::-2}:${offset:(-2)}"
+}
+
+grep_lastlog

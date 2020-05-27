@@ -1,0 +1,7 @@
+{
+    "required": ["listen"],
+    "defaults": {
+	"extra.volume": "",
+	"onstart.message": ""
+    }
+}

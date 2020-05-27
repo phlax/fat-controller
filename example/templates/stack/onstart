@@ -1,0 +1,3 @@
+#!/bin/bash
+
+echo "$TPL_ONSTART_MESSAGE"
