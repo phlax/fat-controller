@@ -4,9 +4,9 @@ LOAD=${LOAD:-"load_services"}
 
 
 load_services () {
-    curl -m5 --unix-socket ./example/sockets/fc/service0.0.sock http://localhost | grep Hello | grep backend | grep unix
-    curl -m5 --unix-socket ./example/sockets/fc/service1.0.sock http://localhost | grep Hello | grep backend | grep network
-    docker-compose exec fatc journalctl -f
+    curl -m20 --unix-socket ./example/sockets/fc/service0.0.sock http://localhost | grep Hello | grep backend | grep unix
+    curl -m20 --unix-socket ./example/sockets/fc/service1.0.sock http://localhost | grep Hello | grep backend | grep network
+    docker-compose exec tail -f /var/log/syslog
 }
 
 
