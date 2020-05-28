@@ -28,6 +28,16 @@
 	    "idle": {
 		"timeout": 200,
 		"test": "test-timeout"
+	    },
+	    "template": {
+		"tpls": "stack",
+		"vars": {
+		    "listen": "unix:/var/run/fatc/sockets/daemon.sock",
+		    "response.message": "Hello, world from a backend daemon listening on a unix socket",
+		    "fatc.lib.path": "/var/lib/fatc/daemons/daemon0",
+		    "onstart.message": "GREAT STARTED DAEMON0!",
+		    "extra.volume": "- /var/run/fatc/sockets/daemons/daemon0:/var/run/fatc/sockets"
+		}
 	    }
 	},
 	"daemon1": {
@@ -35,7 +45,17 @@
 	    "tracks": [
 		{"listen": ":unix:",
 		 "upstream": ":upstream:http:80"}
-	    ]
+	    ],
+	    "template": {
+		"tpls": "stack",
+		"vars": {
+		    "listen": "0.0.0.0:80",
+		    "response.message": "Hello, world from a backend daemon listening on network socket",
+		    "fatc.lib.path": "/var/lib/fatc/daemons/daemon1",
+		    "networks": "{fatc: {external: {name: fatc_upstream}}}",
+		    "service.networks": "{fatc: {}}"
+		}
+	    }
 	},
 	"daemon2": {
 	    "depends_on": ["daemon3"],
@@ -43,14 +63,44 @@
 	    "tracks": [
 		{"listen": "0.0.0.0:8082",
 		 "upstream": ":unix:.CUSTOM_SOCKET.sock"}
-	    ]
+	    ],
+	    "template": {
+		"tpls": "stack",
+		"vars": {
+		    "listen": "unix:/var/run/fatc/sockets/.CUSTOM_SOCKET.sock",
+		    "response.message": "Hello, world from a backend daemon listening on a unix socket",
+		    "fatc.lib.path": "/var/lib/fatc/daemons/daemon2",
+		    "extra.volume": "- /var/run/fatc/sockets/daemons/daemon2:/var/run/fatc/sockets"
+		}
+	    }
 	},
 	"daemon3": {
 	    "healthy": "curl --output /dev/null --silent --head --fail http://$UPSTREAM",
 	    "tracks": [
 		{"listen": "0.0.0.0:8083",
 		 "upstream": ":upstream:http_daemon3:80"}
-	    ]
+	    ],
+	    "template": {
+		"tpls": "stack",
+		"vars": {
+		    "http.service": "http_daemon3",
+		    "listen": "0.0.0.0:80",
+		    "response.message": "Hello, world from a backend daemon listening on network socket",
+		    "fatc.lib.path": "/var/lib/fatc/daemons/daemon3",
+		    "networks": "{fatc: {external: {name: fatc_upstream}}}",
+		    "service.networks": "{fatc: {}}"
+		}
+	    }
+	},
+	"daemon4": {
+	    "template": {
+		"tpls": "stack",
+		"vars": {
+		    "listen": "0.0.0.0:80",
+		    "response.message": "Hello, world from a backend daemon listening on network socket",
+		    "fatc.lib.path": "/var/lib/fatc/daemons/daemon4"
+		}
+	    }
 	}
     },
     "services": {
@@ -61,30 +111,70 @@
 		 "upstream": ":unix:"}
 	    ],
 	    "use_criu": ["http", "redis"],
-	    "idle": "./last-activity"
+	    "idle": "./last-activity",
+	    "template": {
+		"tpls": "stack",
+		"vars": {
+		    "listen": "unix:/var/run/fatc/sockets/service.sock",
+		    "response.message": "Hello, world from a backend service listening on a unix socket",
+		    "fatc.lib.path": "/var/lib/fatc/services/service0",
+		    "extra.volume": "- /var/run/fatc/sockets/services/service0:/var/run/fatc/sockets"
+		}
+	    }
 	},
 	"service1": {
 	    "healthy": "curl --output /dev/null --silent --head --fail http://$UPSTREAM",
-	    "idle": "./last-activity",
+	    "idle": "./last-activity-journalctl",
 	    "custom-idle": "$COMPOSE exec http /usr/local/bin/last-activity",
 	    "tracks": [
 		{"listen": ":unix:",
 		 "upstream": ":upstream:http_service1:80"}
-	    ]
+	    ],
+	    "template": {
+		"tpls": "stack",
+		"vars": {
+		    "listen": "0.0.0.0:80",
+		    "http.service": "http_service1",
+		    "response.message": "Hello, world from a backend service listening on network socket",
+		    "fatc.lib.path": "/var/lib/fatc/services/service1",
+		    "networks": "{fatc: {external: {name: fatc_upstream}}}",
+		    "service.networks": "{fatc: {}}"
+		}
+	    }
 	},
 	"service2": {
 	    "healthy": "curl --output /dev/null --silent --head --fail --unix-socket $UPSTREAM http://localhost/",
 	    "tracks": [
 		{"listen": "0.0.0.0:8092",
 		 "upstream": ":unix:"}
-	    ]
+	    ],
+	    "template": {
+		"tpls": "stack",
+		"vars": {
+		    "listen": "unix:/var/run/fatc/sockets/service.sock",
+		    "response.message": "Hello, world from a backend service listening on a unix socket",
+		    "fatc.lib.path": "/var/lib/fatc/services/service2",
+		    "extra.volume": "- /var/run/fatc/sockets/services/service2:/var/run/fatc/sockets"
+		}
+	    }
 	},
 	"service3": {
 	    "healthy": "curl --output /dev/null --silent --head --fail http://$UPSTREAM",
 	    "tracks": [
 		{"listen": "0.0.0.0:8093",
 		 "upstream": ":upstream:http_service3:80"}
-	    ]
+	    ],
+	    "template": {
+		"tpls": "stack",
+		"vars": {
+		    "listen": "0.0.0.0:80",
+		    "http.service": "http_service3",
+		    "response.message": "Hello, world from a backend service listening on network socket",
+		    "fatc.lib.path": "/var/lib/fatc/services/service3",
+		    "networks": "{fatc: {external: {name: fatc_upstream}}}",
+		    "service.networks": "{fatc: {}}"
+		}
+	    }
 	}
     }
 }
