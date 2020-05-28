@@ -85,20 +85,6 @@
 		{"listen": "0.0.0.0:8093",
 		 "upstream": ":upstream:http_service3:80"}
 	    ]
-	},
-	"service4": {
-	    "healthy": "curl --output /dev/null --silent --head --fail http://$UPSTREAM",
-	    "tracks": [
-		{"listen": ":unix:",
-		 "upstream": ":backend:50001"}
-	    ]
-	},
-	"service5": {
-	    "healthy": "curl --output /dev/null --silent --head --fail http://$UPSTREAM",
-	    "tracks": [
-		{"listen": "0.0.0.0:8095",
-		 "upstream": ":backend:50001"}
-	    ]
 	}
     }
 }
