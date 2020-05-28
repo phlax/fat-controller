@@ -6,10 +6,22 @@ fi
 
 
 docker-compose up -d
+
+# ensure systemd files are not populated, if they are phlax/systemd-docker needs updating
+
+if [ -n "$($FC_EXEC ls -A /lib/systemd/system/multi-user.target.wants)" ]; then
+    on_error () {
+	echo "Systemd files have been re-populated, update phlax/systemd-docker"
+	exit 1
+    }
+    on_error
+fi
+
 docker-compose logs fatc
 
 $FC_STATUS
-$FC_STATUS -n500 fatc.configuration
+$FC_STATUS -n1000 fatc.configuration
+$FC_STATUS -n1000 fatc
 $FC_STATUS fatc -p ActiveState | grep -v inactive | grep active
 
 

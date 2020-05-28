@@ -28,16 +28,7 @@ script:
   - echo external-http > example/backend
   - pysh ./tests/system.sh
   - pysh ./tests/daemons.sh
-  # give services a fair chance to fail...
-  - >
-    docker container prune -f
-    && docker image prune -f
-    && docker volume prune -f
-    && docker network prune -f
   - pysh ./tests/services.sh
-  - pysh ./tests/checkpoint.sh
-  - pysh ./tests/idle.sh
-  - pysh ./tests/reconfigure.sh
 
   - shellcheck -x usr/lib/fatc/*
   - shellcheck -x usr/bin/*
