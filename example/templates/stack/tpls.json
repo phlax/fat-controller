@@ -1,7 +1,11 @@
 {
     "required": ["listen"],
     "defaults": {
+	"http.service": "http",
 	"extra.volume": "",
-	"onstart.message": ""
+	"onstart.message": "",
+	"service.networks": "{}",
+	"response.message": "",
+	"networks": "{}"
     }
 }
