@@ -25,7 +25,6 @@ script:
   # this points to an http server in a docker container, but allows realtime updating of where
   # fatc sends :backend: traffic to allow scaling and movable workloads
   - sudo mkdir -p /var/lib/fatc
-  - echo external-http > example/backend
   - pysh ./tests/system.sh
   - pysh ./tests/daemons.sh
   - pysh ./tests/services.sh
