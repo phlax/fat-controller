@@ -74,4 +74,4 @@ services:
     healthcheck:
       interval: 10s
       retries: 20
-      test: systemctl status fatc | grep active
+      test: systemctl status | grep running
