@@ -75,7 +75,7 @@
 	    }
 	},
 	"daemon3": {
-	    "healthy": "curl --output /dev/null --silent --head --fail http://$UPSTREAM",
+	    "healthy": "./healthy",
 	    "tracks": [
 		{"listen": "0.0.0.0:8083",
 		 "upstream": ":upstream:http_daemon3:80"}
@@ -88,7 +88,8 @@
 		    "response.message": "Hello, world from a backend daemon listening on network socket",
 		    "fatc.lib.path": "/var/lib/fatc/daemons/daemon3",
 		    "networks": "{fatc: {external: {name: fatc_upstream}}}",
-		    "service.networks": "{fatc: {}}"
+		    "service.networks": "{fatc: {}}",
+		    "healthy": "echo 'CHECKING HEALTH OF DAEMON 3' && docker ps | grep daemon_daemon3_http_daemon3_1 | grep healthy"
 		}
 	    }
 	},

@@ -6,6 +6,7 @@
 	"onstart.message": "",
 	"service.networks": "{}",
 	"response.message": "",
-	"networks": "{}"
+	"networks": "{}",
+	"healthy": ""
     }
 }
