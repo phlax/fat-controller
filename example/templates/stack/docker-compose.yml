@@ -20,14 +20,14 @@ services:
       $TPL_EXTRA_VOLUME
     networks: $TPL_SERVICE_NETWORKS
     healthcheck:
-      interval: 1s
+      interval: 5s
       retries: 30
       test: "service nginx status || exit 1"
 
   redis:
     image: redis
     healthcheck:
-      interval: 1s
+      interval: 5s
       retries: 30
       test: "redis-cli ping | grep PONG"
 

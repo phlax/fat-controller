@@ -43,20 +43,7 @@ services:
       # - /var/run/fatc/sockets:/var/run/fatc/sockets
       - ${PWD}/example/sockets:/var/run/fatc/sockets
 
-      # this is used to determine where to send :backend: requests
-      # - /var/lib/fatc/backend:/var/lib/fatc/backend:ro
-      - ${PWD}/example/backend:/var/lib/fatc/backend:ro
-
-      - ${PWD}/example/daemon0:/var/lib/fatc/daemons/daemon0
-      - ${PWD}/example/daemon1:/var/lib/fatc/daemons/daemon1
-      - ${PWD}/example/daemon2:/var/lib/fatc/daemons/daemon2
-      - ${PWD}/example/daemon3:/var/lib/fatc/daemons/daemon3
-      - ${PWD}/example/daemon4:/var/lib/fatc/daemons/daemon4
-
-      - ${PWD}/example/service0:/var/lib/fatc/services/service0
-      - ${PWD}/example/service1:/var/lib/fatc/services/service1
-      - ${PWD}/example/service2:/var/lib/fatc/services/service2
-      - ${PWD}/example/service3:/var/lib/fatc/services/service3
+      - ${PWD}/example/templates:/tmp/templates-registry
 
     tmpfs:
       # systemd requires these to be on tmpfs
