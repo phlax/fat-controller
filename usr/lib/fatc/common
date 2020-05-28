@@ -101,6 +101,18 @@ fatc_get_stack_dir () {
 }
 
 
+fatc_get_tracks () {
+    local stack_name stack_type
+    stack_type="$1"
+    stack_name="$2"
+    jq -cr \
+       --arg stack_name "${stack_name}" \
+       --arg stack_type "${stack_type}s" \
+       "$FATC_STACK_CONFIG | .tracks // [] | .[] | @base64" \
+       "$FATC_CONFIG"
+}
+
+
 fatc_get_stack_services () {
     local dir stack_type stack_name
     stack_type="$1"

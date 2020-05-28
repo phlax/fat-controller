@@ -173,7 +173,7 @@ fatc_get_upstream_address () {
 
 fatc_configure_track () {
     local config compose healthy index line listen \
-	  result services stack_name stack_type upstream
+	  result services stack_name stack_type track upstream
     stack_type=$1
     stack_name=$2
     index=$3
@@ -195,18 +195,6 @@ fatc_configure_track () {
     for line in "${result[@]}"; do
 	fatc_log "$line"
     done
-}
-
-
-fatc_get_tracks () {
-    local stack_name stack_type
-    stack_type="$1"
-    stack_name="$2"
-    jq -cr \
-       --arg stack_name "${stack_name}" \
-       --arg stack_type "${stack_type}s" \
-       "$FATC_STACK_CONFIG | .tracks // [] | .[] | @base64" \
-       "$FATC_CONFIG"
 }
 
 
@@ -271,32 +259,6 @@ fatc_configure_daemon () {
 
 fatc_configure_service () {
     fatc_configure_stack service "$1"
-}
-
-
-fatc_configure_start_service () {
-    # only the socket - ie no stack is activated for services
-    # stacks are activated dynamically when the socket is tickled
-    local i track
-    i=0
-    for track in $(fatc_get_tracks service "$1"); do
-	systemctl start "fatc.service.${1}.${i}--proxy.socket"
-	i=$((i + 1))
-    done
-}
-
-
-fatc_configure_start_daemon () {
-    local compose i track
-    i=0
-    for track in $(fatc_get_tracks daemon "$1"); do
-	systemctl start "fatc.daemon.${1}.${i}--proxy.socket"
-	i=$((i + 1))
-    done
-    compose=$(fatc_get_stack_compose daemon "$1")
-    if [ -f "$compose" ]; then
-	systemctl start "fatc.daemon.${1}"
-    fi
 }
 
 
@@ -368,10 +330,8 @@ fatc_configure () {
 
     export -f fatc_configure_service
     export -f fatc_configure_service_idle
-    export -f fatc_configure_start_service
 
     export -f fatc_configure_daemon
-    export -f fatc_configure_start_daemon
     export -f fatc_log
     export -f fatc_log_warn
     export -f fatc_log_err
@@ -403,6 +363,15 @@ fatc_configure () {
     fatc_configure_volumes
     fatc_configure_parallel configure daemon
     fatc_configure_parallel configure service
-    fatc_configure_parallel configure_start service
-    fatc_configure_parallel configure_start daemon
+}
+
+
+fatc_render () {
+    # export TPLS_DEBUG=1
+    export TPLS_RENDER='.daemons | to_entries | map({key: .key, value: .value.template})[] | @base64'
+    export TPLS_CONFIG="/etc/fatc/config.json"
+    export TPLS_TEMPLATES_REGISTRY=/tmp/templates-registry
+    tpls render /var/lib/fatc/daemons
+    export TPLS_RENDER='.services | to_entries | map({key: .key, value: .value.template})[] | @base64'
+    tpls render /var/lib/fatc/services
 }

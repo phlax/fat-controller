@@ -4,8 +4,48 @@
 . /usr/lib/fatc/common
 
 
+fatc_start_service () {
+    # only the socket - ie no stack is activated for services
+    # stacks are activated dynamically when the socket is tickled
+    local i
+    i=0
+    for _ in $(fatc_get_tracks service "$1"); do
+	systemctl start "fatc.service.${1}.${i}--proxy.socket"
+	i=$((i + 1))
+    done
+}
+
+
+fatc_start_daemon () {
+    local compose i
+    i=0
+    for _ in $(fatc_get_tracks daemon "$1"); do
+	systemctl start "fatc.daemon.${1}.${i}--proxy.socket"
+	i=$((i + 1))
+    done
+    compose=$(fatc_get_stack_compose daemon "$1")
+    if [ -f "$compose" ]; then
+	systemctl start "fatc.daemon.${1}"
+    fi
+}
+
+
 fatc_start () {
-    fatc_log "Fatc started"
+    export -f fatc_start_service
+    export -f fatc_start_daemon
+    export -f fatc_log
+    export -f fatc_log_warn
+    export -f fatc_log_err
+    export -f fatc_get_stack_compose
+    export -f fatc_get_tracks
+    export -f fatc_get_stack_dir
+    export FATC_DAEMONS
+    export FATC_SERVICES
+    export FATC_CONFIG
+    export FATC_STACK_CONFIG
+
+    fatc_configure_parallel start service
+    fatc_configure_parallel start daemon
 }
 
 
