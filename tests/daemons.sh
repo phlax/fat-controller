@@ -56,7 +56,7 @@ $D2_COMPOSE logs http | grep GET
 ## http socket for daemon3 is setup and listening
 $D3_STATUS.0--proxy.socket -p ActiveState | grep -v inactive | grep active
 $D3_STATUS.0--proxy -p ActiveState | grep inactive
-$D3_STATUS -n200 | grep HEAD
+$D3_STATUS -n200 | grep "CHECKING HEALTH" | grep "DAEMON 3"
 
 ## http socket for daemon3 is responding to http requests
 $CURL http://localhost:8083 | grep Hello | grep backend | grep network
