@@ -36,7 +36,7 @@ $protocol=$listen
 [Install]
 WantedBy=sockets.target
 EOF
-    systemctl enable "$socket"
+    systemctl enable "$socket" 2> /dev/null
 }
 
 
@@ -100,7 +100,7 @@ PassEnvironment=FATC_CONTAINERS
 PassEnvironment=FATC_TIMEOUT_SOCKETS
 RemainAfterExit=true
 EOF
-    systemctl enable "$name"
+    systemctl enable "$name" 2> /dev/null
 }
 
 
@@ -123,7 +123,7 @@ PassEnvironment=FATC_SERVICES_SOCKETS
 PassEnvironment=FATC_TIMEOUT_SOCKETS
 RemainAfterExit=true
 EOF
-    systemctl enable "$name"
+    systemctl enable "$name" 2> /dev/null
 }
 
 
