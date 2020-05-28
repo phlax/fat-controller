@@ -4,3 +4,5 @@ etc/criu etc
 usr/bin/* usr/bin
 usr/lib/fatc usr/lib
 etc/sudoers.d etc
+etc/rsyslog.d/10-docker-blocklist.conf etc/rsyslog.d
+etc/rsyslog.d/11-fatc-blocklist.conf etc/rsyslog.d
