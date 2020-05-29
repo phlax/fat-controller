@@ -43,7 +43,7 @@ services:
       # - /var/run/fatc/sockets:/var/run/fatc/sockets
       - ${PWD}/example/sockets:/var/run/fatc/sockets
 
-      - ${PWD}/example/templates:/tmp/templates-registry
+      - ${PWD}/example/templates:/var/lib/fatc/templates-registry
 
     tmpfs:
       # systemd requires these to be on tmpfs
