@@ -1,9 +1,0 @@
-#!/bin/bash -e
-
-
-grep_journalctl_lastlog () {
-    local lastlog tstamp offset
-    journalctl -n1 -o json -u $SERVICE | jq -r '.__REALTIME_TIMESTAMP' | xargs -n1 --replace echo '{} / 1000000' | bc
-}
-
-grep_journalctl_lastlog
