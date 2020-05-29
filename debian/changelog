@@ -1,4 +1,10 @@
-fatc (0.0.40) UNRELEASED; urgency=medium
+fatc (0.0.41) UNRELEASED; urgency=medium
+
+  * Fixes and cleanups
+
+ -- Ryan Northey <ryan@synca.io>  Fri, 29 May 2020 07:36:42 +0100
+
+fatc (0.0.40) buster; urgency=medium
 
   * Add tpls dependency
 
