@@ -1,4 +1,10 @@
-fatc (0.0.42) UNRELEASED; urgency=medium
+fatc (0.0.43) UNRELEASED; urgency=medium
+
+  * Make template debugging configurable
+
+ -- Ryan Northey <ryan@synca.io>  Fri, 29 May 2020 12:56:49 +0100
+
+fatc (0.0.42) buster; urgency=medium
 
   * Make templates-registry configurable
 
