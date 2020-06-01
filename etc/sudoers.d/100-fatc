@@ -1,1 +1,2 @@
 fatc ALL = (root) NOPASSWD: /bin/ip
+fatc ALL = (root) NOPASSWD: /sbin/iptables
