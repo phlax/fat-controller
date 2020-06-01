@@ -1,4 +1,10 @@
-fatc (0.0.43) UNRELEASED; urgency=medium
+fatc (0.0.44) UNRELEASED; urgency=medium
+
+  * Allow fatc user to add iptables rules
+
+ -- Ryan Northey <ryan@synca.io>  Mon, 01 Jun 2020 13:23:31 +0100
+
+fatc (0.0.43) buster; urgency=medium
 
   * Make template debugging configurable
 
