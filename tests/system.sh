@@ -71,4 +71,10 @@ $FC_EXEC ls -lh /var/run/fatc/sockets | grep testvolume | grep "drwx------"
 $FC_EXEC ls -lh /var/run/fatc/sockets | grep testvolume | grep 723
 
 
+## sudo permissions
+
+$FC_EXEC su -s /bin/sh fatc -c "sudo ip route | grep docker0"
+$FC_EXEC su -s /bin/sh fatc -c "sudo iptables -L | grep DOCKER-USER"
+
+
 docker-compose down
