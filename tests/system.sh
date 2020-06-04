@@ -77,4 +77,11 @@ $FC_EXEC su -s /bin/sh fatc -c "sudo ip route | grep docker0"
 $FC_EXEC su -s /bin/sh fatc -c "sudo iptables -L | grep DOCKER-USER"
 
 
+## templates
+
+stackhash=$($FC_EXEC hashtree -i ".tpls/*" -c .tpls/ignore hash /var/lib/fatc/templates-registry/stack)
+$FC_EXEC fatctl templates pull
+$FC_EXEC fatctl templates list | grep "$stackhash"
+
+
 docker-compose down
