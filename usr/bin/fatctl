@@ -26,7 +26,6 @@ usage () {
 
     install                 Install docker-compose environment and other setup ?
     configure               Configure systemd units from fatctl config
-    render                  Render stack configurations from templates
     resolve                 Resolve the IP for a container service
 
     start                   Start fatc
@@ -39,6 +38,8 @@ usage () {
     stop-idle               Stop idle services
     stop-proxy              Stop proxy track
     stop-stack              Stop container stack
+
+    templates               Manage templates
 
     wait-backend            Wait for backend to become ready
     wait-stack              Wait for stack to become ready
@@ -70,9 +71,6 @@ case $ARG in
     list-services )
         fatc_list_services
         ;;
-    render )
-        fatc_render
-        ;;
     resolve )
         what=$1
         shift
@@ -101,6 +99,19 @@ case $ARG in
         ;;
     stop-stack )
         fatc_stack_stop "${@}"
+        ;;
+    templates )
+	case "$1" in
+	    list )
+		fatc_templates_list
+		;;
+	    pull )
+		fatc_templates_pull "$2"
+		;;
+	    render )
+		fatc_templates_render "$2"
+		;;
+	esac
         ;;
     wait-backend )
         fatc_backend_wait "${@}"

@@ -4,7 +4,7 @@ Requires=docker.service
 After=docker.service
 
 [Service]
-ExecStartPre=/usr/bin/fatctl render
+ExecStartPre=/usr/bin/fatctl templates render
 ExecStartPre=/usr/bin/fatctl configure
 ExecStart=/bin/echo "fatc configured"
 PrivateTmp=false

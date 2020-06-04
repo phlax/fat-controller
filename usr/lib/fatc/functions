@@ -10,3 +10,4 @@
 . /usr/lib/fatc/proc
 . /usr/lib/fatc/backend
 . /usr/lib/fatc/proxy
+. /usr/lib/fatc/templates

@@ -365,23 +365,3 @@ fatc_configure () {
     fatc_configure_parallel configure daemon
     fatc_configure_parallel configure service
 }
-
-
-fatc_render () {
-    local debug registry
-    debug=$(jq -r '.templates.debug // empty' "$FATC_CONFIG")
-    if [ -n "$debug" ]; then
-	export TPLS_DEBUG=1
-    fi
-    export TPLS_RENDER='.daemons // {} | to_entries | map({key: .key, value: .value.template})[] | @base64'
-    export TPLS_CONFIG="$FATC_CONFIG"
-    registry=$(jq -r '.templates.registry // empty' "$FATC_CONFIG")
-    if [ -z "$registry" ]; then
-	export TPLS_TEMPLATES_REGISTRY="$FATC_TEMPLATES_REGISTRY"
-    else
-	export TPLS_TEMPLATES_REGISTRY="$registry"
-    fi
-    tpls render "$FATC_DAEMONS"
-    export TPLS_RENDER='.services // {} | to_entries | map({key: .key, value: .value.template})[] | @base64'
-    tpls render "$FATC_SERVICES"
-}
