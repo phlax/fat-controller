@@ -1,4 +1,10 @@
-fatc (0.0.44) UNRELEASED; urgency=medium
+fatc (0.0.45) UNRELEASED; urgency=medium
+
+  * Add template hashing/verification
+
+ -- Ryan Northey <ryan@synca.io>  Tue, 09 Jun 2020 11:50:51 +0100
+
+fatc (0.0.44) buster; urgency=medium
 
   * Allow fatc user to add iptables rules
 
