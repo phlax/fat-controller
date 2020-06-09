@@ -90,6 +90,7 @@ User=fatc
 ExecStart=/usr/bin/fatctl start-stack ${stack_type} ${stack_name} ${upstream} ${use_criu}
 ExecStartPost=/usr/bin/fatctl wait-stack ${stack_type} ${stack_name} 0.5 "${healthy}" ${upstream} "${onstart}"
 ExecStop=/usr/bin/fatctl stop-stack ${stack_type} ${stack_name} ${use_criu}
+ExecStopPost=/usr/bin/fatctl cleanup-stack ${stack_type} ${stack_name}
 PassEnvironment=FATC_DAEMONS
 PassEnvironment=FATC_DAEMONS_SOCKETS
 PassEnvironment=FATC_SERVICES

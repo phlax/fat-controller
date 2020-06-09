@@ -28,6 +28,8 @@ usage () {
     configure               Configure systemd units from fatctl config
     resolve                 Resolve the IP for a container service
 
+    cleanup-stack           Cleanup container stack
+
     start                   Start fatc
     start-backend           Start backend track
     start-proxy             Start proxy track
@@ -49,6 +51,9 @@ EOF
 
 
 case $ARG in
+    cleanup-stack )
+        fatc_stack_cleanup "${@}"
+        ;;
     configure )
         fatc_configure
         ;;
@@ -101,17 +106,17 @@ case $ARG in
         fatc_stack_stop "${@}"
         ;;
     templates )
-	case "$1" in
-	    list )
-		fatc_templates_list
-		;;
-	    pull )
-		fatc_templates_pull "$2"
-		;;
-	    render )
-		fatc_templates_render "$2"
-		;;
-	esac
+        case "$1" in
+            list )
+                fatc_templates_list
+                ;;
+            pull )
+                fatc_templates_pull "$2"
+                ;;
+            render )
+                fatc_templates_render "$2"
+                ;;
+        esac
         ;;
     wait-backend )
         fatc_backend_wait "${@}"

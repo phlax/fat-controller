@@ -80,6 +80,22 @@ function fatc_stack_stop () {
     fi
     compose=$(fatc_get_stack_compose_command "$stack_type" "$stack_name")
     $compose down
+}
+
+
+function fatc_stack_cleanup () {
+    local compose container remaining stack_name stack_type
+    stack_type="$1"
+    stack_name="$2"
+    compose=$(fatc_get_stack_compose_command "$stack_type" "$stack_name")
+    remaining=$($compose ps -q | tr '\n' ' ')
+    if [ -n "$remaining" ]; then
+	for container in $remaining; do
+	    fatc_log_warn "Forced removal of container ($stack_name): $container"
+	    docker container rm -f "$container"
+	done
+	$compose down
+    fi
     fatc_log "Stack stopped ${stack_type}/${stack_name}"
 }
 
