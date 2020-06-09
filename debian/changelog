@@ -1,4 +1,10 @@
-fatc (0.0.45) UNRELEASED; urgency=medium
+fatc (0.0.46) UNRELEASED; urgency=medium
+
+  * Add stack cleanup to ensure containers removed on stop
+
+ -- Ryan Northey <ryan@synca.io>  Tue, 09 Jun 2020 22:16:49 +0100
+
+fatc (0.0.45) buster; urgency=medium
 
   * Add template hashing/verification
 
