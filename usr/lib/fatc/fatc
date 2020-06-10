@@ -50,5 +50,14 @@ fatc_start () {
 
 
 fatc_stop () {
+    fatc_log "Fatc stopping"
+    sleep 10
     fatc_log "Fatc stopped"
+}
+
+
+fatc_sockets_stop () {
+    fatc_log "Fatc sockets stopping"
+    sleep 10
+    fatc_log "Fatc sockets stopped"
 }

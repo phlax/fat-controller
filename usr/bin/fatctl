@@ -105,6 +105,9 @@ case $ARG in
     stop-idle )
         fatc_idle_stop
         ;;
+    stop-sockets )
+        fatc_sockets_stop "${@}"
+        ;;
     stop-stack )
         fatc_stack_stop "${@}"
         ;;

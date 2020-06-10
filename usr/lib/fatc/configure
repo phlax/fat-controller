@@ -35,7 +35,7 @@ fatc_configure_proxy_socket () {
 [Socket]
 $protocol=$listen
 [Install]
-WantedBy=sockets.target
+WantedBy=sockets.target fatc.target
 EOF
     systemctl enable "$socket" 2> /dev/null
 }
@@ -371,5 +371,7 @@ fatc_configure () {
 
 
 fatc_deconfigure () {
+    echo "DECONFIGURING"
     docker container prune -f && docker network prune -f && docker volume prune -f && docker image prune -f
+    echo "/DECONFIGURING"
 }
