@@ -6,6 +6,7 @@ After=fatc.configuration.service fatc.idle.timer
 [Service]
 ExecStartPre=/usr/bin/fatctl start
 ExecStart=/bin/echo "fatc started"
+ExecStopPre=/bin/echo "PRESTOPPING FATC" && sleep 10 && echo "/PRESTOPPING FATC"
 ExecStop=/usr/bin/fatctl stop
 ExecStopPost=/usr/bin/fatctl stop-sockets
 PrivateTmp=true
