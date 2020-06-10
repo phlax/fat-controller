@@ -84,4 +84,11 @@ $FC_EXEC fatctl templates pull
 $FC_EXEC fatctl templates list | grep "$stackhash"
 
 
+## stopping
+$FC_EXEC systemctl stop fatc.configuration
+
+
+$FC_EXEC journalctl -l --no-pager -n500 -u fatc.*
+
+
 docker-compose down
