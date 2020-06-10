@@ -34,7 +34,6 @@ fatc_configure_proxy_socket () {
     cat > "$socket_path" <<EOF
 [Socket]
 $protocol=$listen
-Before=fatc.service
 [Install]
 WantedBy=sockets.target fatc.target
 EOF
@@ -51,6 +50,7 @@ Requires=fatc.$1.$2.service
 After=fatc.$1.$2.service
 Requires=fatc.${1}.${2}.${3}--proxy.socket
 After=fatc.${1}.${2}.${3}--proxy.socket
+Before=fatc.service
 [Service]
 User=fatc
 ExecStart=/usr/bin/fatctl start-proxy .5 $1 $2 $3 $4
