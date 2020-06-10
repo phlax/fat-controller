@@ -48,6 +48,8 @@ fatc_configure_proxy_service () {
 Description=Proxy $1 service: $2.$3
 Requires=fatc.$1.$2.service
 After=fatc.$1.$2.service
+Requires=fatc.${1}.${2}.${3}--proxy.socket
+After=fatc.${1}.${2}.${3}--proxy.socket
 [Service]
 User=fatc
 ExecStart=/usr/bin/fatctl start-proxy .5 $1 $2 $3 $4
