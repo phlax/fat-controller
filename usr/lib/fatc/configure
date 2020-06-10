@@ -368,3 +368,8 @@ fatc_configure () {
     fatc_configure_parallel configure daemon
     fatc_configure_parallel configure service
 }
+
+
+fatc_deconfigure () {
+    docker container prune -f && docker network prune -f && docker volume prune -f && docker image prune -f
+}

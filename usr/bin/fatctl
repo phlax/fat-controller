@@ -57,6 +57,9 @@ case $ARG in
     configure )
         fatc_configure
         ;;
+    deconfigure )
+        fatc_deconfigure
+        ;;
     d | daemon)
         stackctl daemon "${@}"
         ;;
