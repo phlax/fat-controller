@@ -49,6 +49,18 @@ fatc_start () {
 }
 
 
+fatc_stop_socket () {
+    systemctl stop "$1"
+}
+
+
 fatc_stop () {
+    local cores
+    export -f fatc_log
+    export -f fatc_stop_socket
+    if systemctl is-active dbus; then
+	cores=$(grep -F -c processor /proc/cpuinfo)
+	find /etc/systemd/system -mindepth 1 -maxdepth 1 -name "fatc*socket" | cut -d/ -f5 | xargs -n1 -P"$cores" -I{} bash -c "fatc_stop_socket {}"
+    fi
     fatc_log "Fatc stopped"
 }
