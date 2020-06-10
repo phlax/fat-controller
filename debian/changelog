@@ -1,4 +1,10 @@
-fatc (0.0.46) UNRELEASED; urgency=medium
+fatc (0.0.47) UNRELEASED; urgency=medium
+
+  * Add requires/after proxy socket in proxy service
+
+ -- Ryan Northey <ryan@synca.io>  Wed, 10 Jun 2020 09:49:45 +0100
+
+fatc (0.0.46) buster; urgency=medium
 
   * Add stack cleanup to ensure containers removed on stop
 
