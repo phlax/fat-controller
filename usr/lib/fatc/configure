@@ -86,6 +86,7 @@ fatc_configure_systemd_service () {
 Description=Fatc ${stack_type}: ${stack_name}
 Requires=fatc.configuration.service ${depends}
 After=fatc.configuration.service ${depends}
+Before=fatc.service
 [Install]
 WantedBy=fatc.target
 [Service]
