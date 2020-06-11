@@ -1,4 +1,10 @@
-fatc (0.0.48) UNRELEASED; urgency=medium
+fatc (0.0.49) UNRELEASED; urgency=medium
+
+  * Add --no-block when stopping sockets, prevents shutdown hang
+
+ -- Ryan Northey <ryan@synca.io>  Thu, 11 Jun 2020 10:15:02 +0100
+
+fatc (0.0.48) buster; urgency=medium
 
   * Stop sockets before services when stopping fat
 
