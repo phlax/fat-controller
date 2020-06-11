@@ -50,7 +50,7 @@ fatc_start () {
 
 
 fatc_stop_socket () {
-    systemctl stop "$1"
+    systemctl stop --no-block "$1"
 }
 
 
