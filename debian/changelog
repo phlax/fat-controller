@@ -1,4 +1,10 @@
-fatc (0.0.47) UNRELEASED; urgency=medium
+fatc (0.0.48) UNRELEASED; urgency=medium
+
+  * Stop sockets before services when stopping fat
+
+ -- Ryan Northey <ryan@synca.io>  Thu, 11 Jun 2020 08:07:58 +0100
+
+fatc (0.0.47) buster; urgency=medium
 
   * Add requires/after proxy socket in proxy service
 
