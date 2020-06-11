@@ -22,8 +22,10 @@
 	    "healthy": "curl --output /dev/null --silent --head --fail --unix-socket $UPSTREAM http://localhost/",
 	    "onstart": "./onstart",
 	    "tracks": [
-		{"listen": ":unix:",
-		 "upstream": ":unix:"}
+		{
+		    "listen": ":unix:",
+		    "upstream": ":unix:"
+		}
 	    ],
 	    "idle": {
 		"timeout": 200,
@@ -43,8 +45,10 @@
 	"daemon1": {
 	    "healthy": "curl --output /dev/null --silent --head --fail http://$UPSTREAM",
 	    "tracks": [
-		{"listen": ":unix:",
-		 "upstream": ":upstream:http:80"}
+		{
+		    "listen": ":unix:",
+		    "upstream": ":upstream:http:80"
+		}
 	    ],
 	    "template": {
 		"tpls": "stack",
@@ -61,8 +65,10 @@
 	    "depends_on": ["daemon3"],
 	    "healthy": "curl --output /dev/null --silent --head --fail --unix-socket $UPSTREAM http://localhost/",
 	    "tracks": [
-		{"listen": "0.0.0.0:8082",
-		 "upstream": ":unix:.CUSTOM_SOCKET.sock"}
+		{
+		    "listen": "0.0.0.0:8082",
+		    "upstream": ":unix:.CUSTOM_SOCKET.sock"
+		}
 	    ],
 	    "template": {
 		"tpls": "stack",
@@ -77,8 +83,10 @@
 	"daemon3": {
 	    "healthy": "./healthy",
 	    "tracks": [
-		{"listen": "0.0.0.0:8083",
-		 "upstream": ":upstream:http_daemon3:80"}
+		{
+		    "listen": "0.0.0.0:8083",
+		    "upstream": ":upstream:http_daemon3:80"
+		}
 	    ],
 	    "template": {
 		"tpls": "stack",
@@ -108,8 +116,10 @@
 	"service0": {
 	    "healthy": "curl --output /dev/null --silent --head --fail --unix-socket $UPSTREAM http://localhost",
 	    "tracks": [
-		{"listen": ":unix:",
-		 "upstream": ":unix:"}
+		{
+		    "listen": ":unix:",
+		    "upstream": ":unix:"
+		}
 	    ],
 	    "use_criu": ["http", "redis"],
 	    "idle": "./last-activity",
@@ -128,8 +138,10 @@
 	    "idle": "./last-activity-journalctl",
 	    "custom-idle": "$COMPOSE exec http /usr/local/bin/last-activity",
 	    "tracks": [
-		{"listen": ":unix:",
-		 "upstream": ":upstream:http_service1:80"}
+		{
+		    "listen": ":unix:",
+		    "upstream": ":upstream:http_service1:80"
+		}
 	    ],
 	    "template": {
 		"tpls": "stack",
@@ -146,8 +158,10 @@
 	"service2": {
 	    "healthy": "curl --output /dev/null --silent --head --fail --unix-socket $UPSTREAM http://localhost/",
 	    "tracks": [
-		{"listen": "0.0.0.0:8092",
-		 "upstream": ":unix:"}
+		{
+		    "listen": "0.0.0.0:8092",
+		    "upstream": ":unix:"
+		}
 	    ],
 	    "template": {
 		"tpls": "stack",
@@ -162,8 +176,10 @@
 	"service3": {
 	    "healthy": "curl --output /dev/null --silent --head --fail http://$UPSTREAM",
 	    "tracks": [
-		{"listen": "0.0.0.0:8093",
-		 "upstream": ":upstream:http_service3:80"}
+		{
+		    "listen": "0.0.0.0:8093",
+		    "upstream": ":upstream:http_service3:80"
+		}
 	    ],
 	    "template": {
 		"tpls": "stack",
