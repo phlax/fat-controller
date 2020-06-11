@@ -20,16 +20,11 @@ services:
     image: phlax/fatc
     # required for systemd logging
     tty: true
-
-    # required to do bind mount inside - see docker workaround below
-    # cap_add:
-    #   - SYS_ADMIN
-    # NOT NEEDED! - maybe needed by travis or by docker...
+    # required for network caps (and maybe docker)
     privileged: true
 
     volumes:
-      # docker socket
-      # - /var/run/docker.sock:/var/run/docker.sock
+      # persist docker images etc
       - /var/lib/fatc/docker:/var/lib/docker
 
       # systemd requirement
