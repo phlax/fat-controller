@@ -53,7 +53,3 @@ services:
       # required to connect to network services
       - 8092:8092
       - 8093:8093
-    healthcheck:
-      interval: 10s
-      retries: 20
-      test: systemctl status | grep running
