@@ -79,6 +79,9 @@ case $ARG in
     prune )
         fatc_prune
         ;;
+    reload )
+        fatc_reload
+        ;;
     resolve )
         what=$1
         shift

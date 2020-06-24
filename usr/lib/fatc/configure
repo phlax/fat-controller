@@ -371,6 +371,57 @@ fatc_configure () {
 }
 
 
+fatc_deconfigure_stack () {
+    local paths stack_dir stack_name stack_type
+    stack_type="$1"
+    stack_name="$2"
+    stack_dir=$(fatc_get_stack_dir "$stack_type" "$stack_name")
+    paths=$(find /etc/systemd/system/ -mindepth 1 -maxdepth 1 -name "fatc.${stack_type}.${stack_name}\.*\.socket")
+    for path in $paths; do
+	service=$(echo "$path" | cut -d/ -f5)
+	systemctl disable "$service"
+	systemctl stop "$service"
+	rm -rf "$path"
+    done
+    paths=$(find /etc/systemd/system/ -mindepth 1 -maxdepth 1 -name "fatc.${stack_type}.${stack_name}.*")
+    for path in $paths; do
+	service=$(echo "$path" | cut -d/ -f5)
+	systemctl disable "$service"
+	systemctl stop "$service"
+	rm -rf "$path"
+    done
+    if [ -d "$stack_dir" ]; then
+	rm -rf "$stack_dir"
+    fi
+}
+
+
+fatc_deconfigure_stacks () {
+    local configured stack stack_type stacks
+    stack_type="$1"
+    configured=$(find /etc/systemd/system -mindepth 1 -maxdepth 1 -type f -name "fatc.${stack_type}.*" | cut -d/ -f5 | cut -d. -f3 | sort | uniq)
+    stacks=$(jq -r --arg stack_type "${stack_type}s" '.[$stack_type] // {} | keys[]' "$FATC_CONFIG")
+    for stack in $configured; do
+	if ! grep -q "^$stack$" <<<"$stacks" ; then
+	    fatc_deconfigure_stack "$stack_type" "$stack"
+        fi
+    done
+}
+
+
+fatc_deconfigure () {
+    fatc_deconfigure_stacks daemon
+    fatc_deconfigure_stacks service
+}
+
+
 fatc_prune () {
     docker container prune -f && docker network prune -f && docker volume prune -f && docker image prune -f
+}
+
+
+fatc_reload () {
+    fatc_templates_render
+    fatc_deconfigure
+    fatc_configure
 }
