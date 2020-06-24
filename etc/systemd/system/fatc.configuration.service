@@ -9,6 +9,7 @@ ExecStartPre=/usr/bin/fatctl configure
 ExecStart=/bin/echo "fatc configured"
 ExecStop=/bin/echo "stopping fatc configuration"
 ExecStopPost=/usr/bin/fatctl deconfigure
+ExecReload=/usr/bin/fatctl configure
 PrivateTmp=false
 RemainAfterExit=true
 PassEnvironment=FATC_SYSTEMD
