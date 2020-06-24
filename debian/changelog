@@ -1,4 +1,11 @@
-fatc (0.0.50) UNRELEASED; urgency=medium
+fatc (0.0.51) UNRELEASED; urgency=medium
+
+  * Add deconfiguration
+  * Improve reloading
+
+ -- Ryan Northey <ryan@synca.io>  Wed, 24 Jun 2020 21:15:26 +0100
+
+fatc (0.0.50) buster; urgency=medium
 
   * Add systemctl reload command
 
