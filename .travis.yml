@@ -12,7 +12,7 @@ before_install:
   - >
     sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
     && sudo apt update
-    && sudo apt -y -o Dpkg::Options::="--force-confnew" install docker-ce criu
+    && sudo apt -y -o Dpkg::Options::="--force-confnew" install docker-ce criu moreutils
 
 install:
   - make image
@@ -28,6 +28,7 @@ script:
   - pysh ./tests/system.sh
   - pysh ./tests/daemons.sh
   - pysh ./tests/services.sh
+  - pysh ./tests/reconfigure.sh
 
   - shellcheck -x usr/lib/fatc/*
   - shellcheck -x usr/bin/*
