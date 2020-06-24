@@ -57,9 +57,6 @@ case $ARG in
     configure )
         fatc_configure
         ;;
-    deconfigure )
-        fatc_deconfigure
-        ;;
     d | daemon)
         stackctl daemon "${@}"
         ;;
@@ -78,6 +75,9 @@ case $ARG in
         ;;
     list-services )
         fatc_list_services
+        ;;
+    prune )
+        fatc_prune
         ;;
     resolve )
         what=$1
