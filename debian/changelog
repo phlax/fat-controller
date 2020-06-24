@@ -1,4 +1,10 @@
-fatc (0.0.49) UNRELEASED; urgency=medium
+fatc (0.0.50) UNRELEASED; urgency=medium
+
+  * Add systemctl reload command
+
+ -- Ryan Northey <ryan@synca.io>  Wed, 24 Jun 2020 09:03:19 +0100
+
+fatc (0.0.49) buster; urgency=medium
 
   * Add --no-block when stopping sockets, prevents shutdown hang
 
