@@ -91,12 +91,17 @@ fatc_get_sockets_dir () {
 
 
 fatc_get_stack_dir () {
-    local stack_type
+    local stack_dir stack_name stack_type
     stack_type="$1"
+    stack_name="$2"
+    stack_dir="$FATC_DAEMONS"
     if [ "$stack_type" = "service" ]; then
-	echo "$FATC_SERVICES"
+	stack_dir="$FATC_SERVICES"
+    fi
+    if [ -n "$stack_name" ]; then
+	printf "%s/%s" "$stack_dir" "$stack_name"
     else
-	echo "$FATC_DAEMONS"
+	printf "%s" "$stack_dir"
     fi
 }
 
