@@ -5,7 +5,6 @@
 . /usr/lib/fatc/fatc
 . /usr/lib/fatc/configure
 . /usr/lib/fatc/docker
-. /usr/lib/fatc/stack
 . /usr/lib/fatc/idle
 . /usr/lib/fatc/proc
 . /usr/lib/fatc/backend

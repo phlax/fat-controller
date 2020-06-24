@@ -15,9 +15,6 @@ usage () {
 
     Commands:
 
-    d, daemon               Configure and retrieve information about daemons
-    s, service              Configure and retrieve information about services
-
     list-daemons            List configured daemons
     list-services           List configured services
 
@@ -29,6 +26,8 @@ usage () {
     resolve                 Resolve the IP for a container service
 
     cleanup-stack           Cleanup container stack
+
+    stack		    Configure and retrieve information about daemons and services
 
     start                   Start fatc
     start-backend           Start backend track
@@ -57,12 +56,6 @@ case $ARG in
     configure )
         fatc_configure
         ;;
-    d | daemon)
-        stackctl daemon "${@}"
-        ;;
-    s | service )
-        stackctl service "${@}"
-        ;;
     install )
         fatc_create_user
         fatc_edit_docker_config
@@ -86,6 +79,9 @@ case $ARG in
         what=$1
         shift
         fatc_"$what"_resolve "${@}"
+        ;;
+    stack )
+        fatc_stack "${@}"
         ;;
     start )
         fatc_start "${@}"
