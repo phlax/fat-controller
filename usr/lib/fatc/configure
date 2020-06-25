@@ -364,6 +364,7 @@ fatc_configure () {
     export FATC_STACK_CONFIG
     export FATC_SYSTEMD
 
+    fatc_deconfigure
     fatc_configure_networks
     fatc_configure_volumes
     fatc_configure_parallel configure daemon
@@ -422,6 +423,5 @@ fatc_prune () {
 
 fatc_reload () {
     fatc_templates_render
-    fatc_deconfigure
     fatc_configure
 }
